@@ -203,9 +203,11 @@ function compare(str, keyword, flags)
     --custom handling for flags
     if flags.wrap then
         if not (flags.pattern and flags.exact) then
-            return str:find("%f[%w_]" .. keyword:lower() .. "%f[^%w_]") or str:lower():find("%f[%w_]" .. keyword:lower() .. "%f[^%w_]")
+            return str:lower():find("%f[%w_]" .. keyword:lower() .. "%f[^%w_]")
         elseif not flags.exact then
             return str:find("%f[%w_]" .. keyword .. "%f[^%w_]") or str:lower():find("%f[%w_]" .. keyword .. "%f[^%w_]")
+        elseif not flags.pattern then
+            return str:find("%f[%w_]" .. keyword .. "%f[^%w_]") or str:find("%f[%w_]" .. keyword:lower() .. "%f[^%w_]")
         else
             return str:find("%f[%w_]" .. keyword .. "%f[^%w_]")
         end
