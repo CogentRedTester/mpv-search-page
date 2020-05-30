@@ -63,7 +63,7 @@ local o = {
 
     --all colour options
     ass_header = "{\\c&H00ccff>&\\fs40\\b500\\q2}",
-    ass_underline = "{\\c&00ccff>&\\fs30\\b100}",
+    ass_underline = "{\\c&00ccff>&\\fs30\\b100\\q2}",
     ass_footer = "{\\c&00ccff>&\\b500\\fs20}",
 
     --colours for keybind page
@@ -75,7 +75,6 @@ local o = {
 
     --colours for commands page
     ass_cmd = "{\\c&Hffccff>\\fs20}",
-    ass_outerbrackets = "{\\fs20\\c&H00cccc>&}",
     ass_args = "{\\fs20\\c&H33ff66>&}",
     ass_optargs = "{\\fs20\\c&Hffff00>&}",
     ass_argtype = "{\\c&H00cccc>&}{\\fs12}",
@@ -88,7 +87,6 @@ local o = {
     ass_options = "{\\c&Hffccff>\\fs20}",
     ass_optionstype = "{\\c&H00cccc>&}{\\fs12}",
     ass_optionsdefault = "{\\c&H33ff66>&\\fs20}",
-
     --list of choices for choice options, ranges for numeric options
     ass_optionsspec = "{\\c&Hffff00>&}",
 }
@@ -158,7 +156,7 @@ function load_results(keyword, flags)
     --if there are no results then a header will never be printed. We don't want that, so here we are
     if header == "" then
         ov.data = ov.data .. "\n" .. o.ass_header .. "No results for '" .. keyword .. "'"..flags.."\
-    "..o.ass_underline.."--------------------------------------------------------------"
+    "..o.ass_underline.."---------------------------------------------------------"
     end
 end
 
@@ -193,7 +191,7 @@ end
 function load_header(keyword, name, flags)
     if name == nil then name = "" end
     ov.data = ov.data .. "\n" .. o.ass_header .. "Search results for " .. name .. " '" .. keyword .. "'"..flags.."\
-    "..o.ass_underline.."--------------------------------------------------------------"
+    "..o.ass_underline.."---------------------------------------------------------"
 end
 
 --handles the search queries
@@ -292,16 +290,19 @@ function search_commands(keyword, flags)
         then
             local cmd = fix_chars(command.name)
 
-            local result = o.ass_cmd .. cmd .. "        "..o.ass_outerbrackets.."("
+            local result_no_ass = cmd .. " "
+            local result = o.ass_cmd .. cmd .. "        "
             for _,arg in ipairs(command.args) do
                 if arg.optional then
                     result = result .. o.ass_optargs
                 else
+                    result_no_ass = result_no_ass .. "!"
                     result = result .. o.ass_args
                 end
-                result = result .. " " .. arg.name .. o.ass_argtype.." ("..arg.type.."), "
+                result_no_ass = result_no_ass .. arg.name .. "("..arg.type..") "
+                result = result .. " " .. arg.name .. o.ass_argtype.." ("..arg.type..") "
             end
-            result = result .. o.ass_outerbrackets ..") \\N"
+            result = result .. "\\N"
 
             table.insert(results, {
                 type = "cmd",
@@ -309,6 +310,8 @@ function search_commands(keyword, flags)
                 funct = function()
                     mp.commandv('script-message-to', 'console', 'type', cmd .. " ")
                     close_overlay()
+                    msg.info("")
+                    msg.info(result_no_ass)
                 end
             })
         end
@@ -329,7 +332,7 @@ function search_options(keyword, flags)
             local type = mp.get_property('option-info/'..option..'/type', '')
             local option_type = "  (" .. type ..")"
 
-            local whitespace = 80 - (option:len() + option_type:len())
+            local whitespace = 50 - (option:len() + option_type:len())
             if whitespace < 4 then whitespace = 4 end
             local default = "#" ..  mp.get_property('option-info/'..option..'/default-value', "")
             if default == "#" then default = "" end
