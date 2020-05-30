@@ -217,7 +217,10 @@ function compare(str, keyword, flags)
 
     --only searches the exact string/pattern
     if flags.exact then
-        return str:find(keyword)
+        if flags.pattern then
+            return str:find(keyword)
+        end
+        return str:find(keyword) or str:find(keyword:lower())
     end
 end
 
