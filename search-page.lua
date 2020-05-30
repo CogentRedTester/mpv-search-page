@@ -59,11 +59,10 @@ local o = {
     --there seems to be a significant performance hit from having lots of text off the screen
     max_list = 30,
 
-    --both colour options
+    --all colour options
     ass_header = "{\\c&H00ccff>&\\fs40\\b500\\q2}",
     ass_underline = "{\\c&00ccff>&\\fs30\\b100}",
-    ass_keywordstart = "{\\u1}",
-    ass_keywordend = "{\\u0}",
+    ass_footer = "{\\c&00ccff>&\\b500\\fs20}",
 
     --colours for keybind page
     ass_allkeybindresults = "{\\fs20\\q2}",
@@ -142,7 +141,10 @@ function load_results(keyword, flags)
 
     local header = ""
     for i,result in ipairs(results) do
-        if i > o.max_list then break end
+        if i > o.max_list then
+            ov.data = ov.data .. "\n".. o.ass_footer.. #results - o.max_list .. " results remaining"
+            break
+        end
 
         if result.type ~= header then
             load_header(keyword, result.type, flags)
