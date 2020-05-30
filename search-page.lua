@@ -233,6 +233,7 @@ function search_keys(keyword, flags)
         or compare(keybind.cmd, keyword, flags)
         or (keybind.comment ~= nil and compare(keybind.comment, keyword, flags))
         or compare(keybind.section, keyword, flags)
+        or (keybind.owner ~= nil and compare(keybind.owner, keyword, flags))
         then
             local key = keybind.key
             local section = ""
@@ -251,9 +252,7 @@ function search_keys(keyword, flags)
 
             --add comments to entry
             if keybind.comment ~= nil then
-                num_spaces = 45 - keybind.cmd:len()
-                if num_spaces < 4 then num_spaces = 4 end
-                comment = string.rep(" ", num_spaces) .. "#" .. keybind.comment
+                comment = string.rep(" ", 8) .. "#" .. keybind.comment
             end
 
             key = fix_chars(key)
