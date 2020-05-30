@@ -67,6 +67,15 @@ These flags can be combined, so for example a query `t wrap` would normally resu
 These flags may be subject to change
 
 
+## Options
+
+Search page will read several options from script-opts when the player is lanched, the current options, and their defaults are:
+
+    enable_jumplist = yes   #this disables trhe jumplist
+    max_list = 30           #this defines how many search results to show
+
+In addition there are a sizeable number of options to customise the ass tags that the page uses. This theoretically allows you to customise the page in almost any way you like. The full list is near the top of the script.
+
 ## Future Plans
 
 Some ideas for future functionality:

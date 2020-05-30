@@ -57,7 +57,7 @@ local o = {
     enable_jumplist = true,
 
     --there seems to be a significant performance hit from having lots of text off the screen
-    max_list = 40,
+    max_list = 30,
 
     --both colour options
     ass_header = "{\\c&H00ccff>&\\fs40\\b500\\q2}",
