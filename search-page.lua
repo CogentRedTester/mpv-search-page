@@ -39,11 +39,13 @@
 
     Flags are strings you can add to the end to customise the query, currently there are 3:
         wrap        search for a whole word only
-        pattern     don't convert the query to lowercase (the default) required for some Lua patterns
-        exact       don't convert the search results into lowercase, might solve some incorrect pattern returns
+        pattern     don't convert the query to lowercase, required for some Lua patterns
+        exact       don't convert anything to lowercase
     
     These flags can be combined, so for example a query `t wrap` would normally result in both lower and upper case t binds, however,
-    `t wrap+exact` will return only lowercase t, and `T wrap+exact+pattern` will return only uppercase T
+    `t wrap+exact` will return only lowercase t. The pattern flag is only useful when doing some funky pattern stuff, for example:
+    `f%A wrap+pattern` will return all complete words containing f followed by a non-letter. Often exact will work just fine for this,
+    but in this example we might still want to find upper-case keys, like function keys, so using just pattern can be more useful.
 
     These may be subject to change
 ]]--
@@ -202,14 +204,12 @@ function compare(str, keyword, flags)
 
     --custom handling for flags
     if flags.wrap then
-        if not (flags.pattern and flags.exact) then
-            return str:lower():find("%f[%w_]" .. keyword:lower() .. "%f[^%w_]")
-        elseif not flags.exact then
-            return str:find("%f[%w_]" .. keyword .. "%f[^%w_]") or str:lower():find("%f[%w_]" .. keyword .. "%f[^%w_]")
-        elseif not flags.pattern then
-            return str:find("%f[%w_]" .. keyword .. "%f[^%w_]") or str:find("%f[%w_]" .. keyword:lower() .. "%f[^%w_]")
-        else
+        if flags.exact then
             return str:find("%f[%w_]" .. keyword .. "%f[^%w_]")
+        elseif flags.pattern then
+            return str:find("%f[%w_]" .. keyword .. "%f[^%w_]") or str:lower():find("%f[%w_]" .. keyword .. "%f[^%w_]")
+        else
+            return str:lower():find("%f[%w_]" .. keyword:lower() .. "%f[^%w_]")
         end
     end
 
@@ -221,10 +221,7 @@ function compare(str, keyword, flags)
 
     --only searches the exact string/pattern
     if flags.exact then
-        if flags.pattern then
-            return str:find(keyword)
-        end
-        return str:find(keyword) or str:find(keyword:lower())
+        return str:find(keyword)
     end
 end
 
