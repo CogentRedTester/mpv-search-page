@@ -58,7 +58,7 @@ Sending a query message without any arguments (or with only the type argument) w
 
 Flags are strings you can add to the end to customise the query, currently there are 3:
 
-        wrap        search for a whole word only
+        wrap        search for a whole word only (may not work with some symbols)
         pattern     don't convert the query to lowercase (the default) required for some Lua patterns
         exact       don't convert the search results into lowercase, might solve some incorrect pattern returns
 
