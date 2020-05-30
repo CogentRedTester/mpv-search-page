@@ -1,7 +1,7 @@
 # mpv-search-page
 
 This script allows you to search for keybinds, properties, options and commands and have matching entries display on the OSD.
-The search is case insensitive, and the script sends the filter directly to a lua string match function, so you can use patterns to get more complex filtering. However, there are some limitations, in order to have 
+The search is case insensitive by default, and the script sends the filter directly to a lua string match function, so you can use patterns to get more complex filtering. For options and limitations see the Queries and Flags sections.
 
 ## Pages
 
