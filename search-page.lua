@@ -76,7 +76,7 @@ local o = {
     ass_cmd = "{\\c&Hffccff>\\fs20}",
     ass_outerbrackets = "{\\fs20\\c&H00cccc>&}",
     ass_args = "{\\fs20\\c&H33ff66>&}",
-    ass_optargs = "{\fs20\\c&Hffff00>&}",
+    ass_optargs = "{\\fs20\\c&Hffff00>&}",
     ass_argtype = "{\\c&H00cccc>&}{\\fs12}",
 
     --colours for property list
@@ -368,7 +368,11 @@ end
 --recieves the input messages
 mp.register_script_message('search_page/input', function(type, keyword, flags)
     if keyword == nil then
-        if ov.data ~= "" then open_overlay() end
+        if ov.data ~= "" then
+            mp.command("script-binding console/_console_1")
+            remove_bindings()
+            open_overlay()
+        end
         return
     end
 
