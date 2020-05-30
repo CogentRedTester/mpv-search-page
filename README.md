@@ -50,19 +50,25 @@ The valid query types are as follows:
     opt$    searches options
     all$    searches all
 
-These queries can be combined, i.e. `key$cmd$` to search multiple categories at once
+These queries can be combined, i.e. `key$cmd$` to search multiple categories at once. Queries can have spaces in them, but if so they must be enclosed in brackets.
 
-Sending a query message without any arguments (or with only the type argument) will reopen the last search.
+Sending a query message without any arguments (or with only the type argument) will reopen the last search page.
+
+## Lua Patterns
+
+This script sends queries directly into the Lua string find function, with the only modification being that the query is converted into lowercase. The find function supports something called [patterns](http://lua-users.org/wiki/PatternsTutorial) to identify any matching substrings. In order to facilitate this there are a number of symbols, such as `? % . ^ [ ]`, which are reserved for pattern creation. If you try to search with any of these symbols you may get some unexpected results; however, you can escape these characters using a `%` sign. If you wish to use patterns to run extremely precise searches, then you may want to look at the flags section for how to make the queries more pattern friendly.
 
 ## Flags
 
-Flags are strings you can add to the end to customise the query, currently there are 3:
+By default the script will convert both the search query, and all the strings it scans into lower case for a wider range of results. It returns any result that contains the full query somewhere in its values. Flags can be used to modify this behaviour. Flags are strings you can add after query, currently there are 3:
 
         wrap        search for a whole word only (may not work with some symbols)
-        pattern     don't convert the query to lowercase (the default) required for some Lua patterns
-        exact       don't convert the search results into lowercase, might solve some incorrect pattern returns
+        pattern     don't convert the query to lowercase, required for some Lua patterns
+        exact       don't convert anything into lowercase
 
-These flags can be combined, so for example a query `t wrap` would normally result in both lower and upper case t binds, however, `t wrap+exact` will return only lowercase t, and `T wrap+exact+pattern` will return only uppercase T
+These flags can be combined, so for example a query `t wrap` would normally result in both lower and upper case t matches, however, `t wrap+exact` will return only lowercase t. The pattern flag is only useful when doing some funky pattern stuff, for example:
+`f%A wrap+pattern` will return all complete words containing f followed by a non-letter. Often `exact` will work just fine for this,
+but in this example we might still want to find upper-case keys, like function keys, so using just `pattern` can be more useful.
 
 These flags may be subject to change
 
@@ -71,10 +77,10 @@ These flags may be subject to change
 
 Search page will read several options from script-opts when the player is lanched, the current options, and their defaults are:
 
-    enable_jumplist = yes   #this disables trhe jumplist
+    enable_jumplist = yes   #this disables the jumplist keybinds
     max_list = 30           #this defines how many search results to show
 
-In addition there are a sizeable number of options to customise the ass tags that the page uses. This theoretically allows you to customise the page in almost any way you like. The full list is near the top of the script.
+In addition there are a sizeable number of options to customise the ass tags that the page uses. This theoretically allows you to customise the page in almost any way you like. There are far too many to show here, the full list is near the top of the script.
 
 ## Future Plans
 
