@@ -85,10 +85,11 @@ local o = {
 
     --colours for options list
     ass_options = "{\\c&Hffccff>\\fs20}",
+    ass_optvalue = "{\\fs20\\c&Hffff00>&}",
     ass_optionstype = "{\\c&H00cccc>&}{\\fs12}",
-    ass_optionsdefault = "{\\c&H33ff66>&\\fs20}",
+    ass_optionsdefault = "{\\c&H00cccc>&}",
     --list of choices for choice options, ranges for numeric options
-    ass_optionsspec = "{\\c&Hffff00>&}",
+    ass_optionsspec = "{\\c&H33ff66>&\\fs20}",
 }
 
 opt.read_options(o, "search_page")
@@ -101,6 +102,7 @@ local ov = mp.create_osd_overlay("ass-events")
 --  type = the type of entry
 --  funct = the function to run on keypress
 local results = {}
+
 local osd_display = mp.get_property_number('osd-duration')
 ov.hidden = true
 
@@ -327,15 +329,17 @@ function search_options(keyword, flags)
         compare(option, keyword, flags)
         or compare(choices, keyword, flags)
         then
-
             local type = mp.get_property('option-info/'..option..'/type', '')
             local option_type = "  (" .. type ..")"
+            local opt_value = fix_chars(mp.get_property('options/'..option), "")
 
-            local whitespace = 50 - (option:len() + option_type:len())
+            local whitespace = 60 - (option:len() + option_type:len() + opt_value:len())
             if whitespace < 4 then whitespace = 4 end
-            local default = "#" ..  mp.get_property('option-info/'..option..'/default-value', "")
-            if default == "#" then default = "" end
-            local option_default = string.rep(" ", whitespace) .. default
+            whitespace = string.rep(" ", whitespace)
+            local default = mp.get_property('option-info/'..option..'/default-value', "")
+            if default ~= "" then
+                default = "  ("..default..")  "
+            end
 
             local options_spec = ""
 
@@ -351,7 +355,7 @@ function search_options(keyword, flags)
 
             table.insert(results, {
                 type = "option",
-                line = o.ass_options .. option .. o.ass_optionstype .. option_type .. o.ass_optionsdefault .. option_default .. o.ass_optionsspec .. options_spec})
+                line = o.ass_options..fix_chars(option)..o.ass_optionstype..option_type..o.ass_optvalue.."        "..opt_value..whitespace..o.ass_optionsdefault..default..o.ass_optionsspec..options_spec})
         end
     end
 end
@@ -363,7 +367,7 @@ function search_property(keyword, flags)
         if compare(property, keyword, flags) then
             table.insert(results, {
                 type = "property",
-                line = o.ass_properties .. property .. "           " .. o.ass_propertycurrent .. fix_chars(mp.get_property(property, ""))})
+                line = o.ass_properties .. property .. "          " .. o.ass_propertycurrent .. fix_chars(mp.get_property(property, ""))})
         end
     end
 end
