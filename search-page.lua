@@ -84,7 +84,7 @@ local o = {
     ass_propertycurrent = "{\\c&Hffff00>&}",
 
     --colours for options list
-    ass_options = "{\\c&Hffccff>\\fs20}",
+    ass_options = "{\\c&Hffccff>\\fs20\\q2}",
     ass_optvalue = "{\\fs20\\c&Hffff00>&}",
     ass_optionstype = "{\\c&H00cccc>&}{\\fs12}",
     ass_optionsdefault = "{\\c&H00cccc>&}",
@@ -323,20 +323,20 @@ function search_options(keyword, flags)
     local options = mp.get_property_native('options')
 
     for _,option in ipairs(options) do
-        local choices = mp.get_property("option-info/"..option..'/choices', ""):gsub(",", " , ")
+        local choices = mp.get_property_osd("option-info/"..option..'/choices', ""):gsub(",", " , ")
 
         if
         compare(option, keyword, flags)
         or compare(choices, keyword, flags)
         then
-            local type = mp.get_property('option-info/'..option..'/type', '')
+            local type = mp.get_property_osd('option-info/'..option..'/type', '')
             local option_type = "  (" .. type ..")"
-            local opt_value = fix_chars(mp.get_property('options/'..option), "")
+            local opt_value = fix_chars(mp.get_property_osd('options/'..option, ""))
 
             local whitespace = 60 - (option:len() + option_type:len() + opt_value:len())
             if whitespace < 4 then whitespace = 4 end
             whitespace = string.rep(" ", whitespace)
-            local default = mp.get_property('option-info/'..option..'/default-value', "")
+            local default =fix_chars(mp.get_property_osd('option-info/'..option..'/default-value', ""))
             
 
             local options_spec = ""
@@ -365,7 +365,7 @@ function search_property(keyword, flags)
         if compare(property, keyword, flags) then
             table.insert(results, {
                 type = "property",
-                line = o.ass_properties .. property .. "          " .. o.ass_propertycurrent .. fix_chars(mp.get_property(property, ""))})
+                line = o.ass_properties .. property .. "          " .. o.ass_propertycurrent .. fix_chars(mp.get_property_osd(property, ""))})
         end
     end
 end
