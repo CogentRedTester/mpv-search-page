@@ -337,20 +337,18 @@ function search_options(keyword, flags)
             if whitespace < 4 then whitespace = 4 end
             whitespace = string.rep(" ", whitespace)
             local default = mp.get_property('option-info/'..option..'/default-value', "")
-            if default ~= "" then
-                default = "  ("..default..")  "
-            end
+            
 
             local options_spec = ""
 
             if type == "Choice" then
-                options_spec = fix_chars("          [ " .. choices .. ' ]')
+                options_spec = fix_chars("            [ " .. choices .. ' ]')
             elseif type == "Integer"
             or type == "ByteSize"
             or type == "Float"
             or type == "Aspect"
             or type == "Double" then
-                options_spec = fix_chars("          [ "..mp.get_property('option-info/'..option..'/min', "").."  -  ".. mp.get_property("option-info/"..option..'/max', "").." ]")
+                options_spec = fix_chars("            [ "..mp.get_property_number('option-info/'..option..'/min', "").."  -  ".. mp.get_property_number("option-info/"..option..'/max', "").." ]")
             end
 
             table.insert(results, {
