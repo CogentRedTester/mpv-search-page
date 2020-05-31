@@ -4,16 +4,31 @@ This script allows you to search for keybinds, properties, options and commands 
 The search is case insensitive by default, and the script sends the filter directly to a lua string match function, so you can use patterns to get more complex filtering. For options and limitations see the Queries and Flags sections.
 
 ## Pages
+There are 4 main search pages, the search page will remain open until the esc key is pressed.
 
-The keybind page searches and displays the key, command, section, and any comments.
+### Keybinds
+The keybind page is for searching keybindings. By default the script searches the name of the key; the command the key runs; the input section the key is part of; the owner of the key (typically the script that creates it); and any comments on the same line as the key in input.conf.
 
-The command page searches just the command name, but also shows information about arguments.
+The search page shows the key name in lavendar on the left, then the command in cyan, and finally the comment in green, preceeded by a `#`. In addition, if the keybinding is part of a section other than the default, the section will be printed in yellow brackets between the key name and the command.
 
-The properties page will search just the property name, but will also show contents of the property
+Pressing keys 1-9 will send the command for that respective entry.
 
-The options page will search the name and option choices, it shows default values, choices, and ranges
+### Commands
+The command page displays input commands that can be used in input.conf or the console, as well as their arguments. The script only searches the name of the commands.
 
-The search page will remain open until told to close. This key is esc.
+The search page shows all of the command names in lavendar on the left. The following words are arguments that the command takes, green arguments are compulsory, while cyan are optional. Each argument contains its type in small yellow brackets. Note that the type, and colour-coding is taken straight from the lua API, so it may not always be correct.
+
+Pressing keys 1-9 will load the command for that respective entry into console.lua, and print the arguments and thier types to the console for reference. Compulsory arguments will have an exclamation mark before them.
+
+### Properties
+The properties page shows all of the properties, and their current values, for the current file. Only the property name is included in the search. Note that the property list contains most options as well.
+
+The search page simply contains the property name on the left, followed by it's current value (if it has one).
+
+### Options
+The options page is for searching options that can be set on the commandline or through mpv.conf. Most of these options have matching properties. The script searches the option name, as well as any choices that are available.
+
+The option page contains the option name in lavendar, directly followed by the option type in small yellow brackets. The cyan entry is the current value of the option, if available, and the yellow is the default option value. The green value shows different information depending on the option type; if the option is a float, integer, double, aspect, or bytesize, then the valid option range is displayed; if the option is a choice, then the valid choices are listed.
 
 ## Jumplist
 
