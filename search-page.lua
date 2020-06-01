@@ -365,7 +365,7 @@ function search_property(keyword, flags)
         if compare(property, keyword, flags) then
             table.insert(results, {
                 type = "property",
-                line = o.ass_properties .. property .. "          " .. o.ass_propertycurrent .. fix_chars(mp.get_property_osd(property, ""))})
+                line = o.ass_properties .. property .. "          " .. o.ass_propertycurrent .. fix_chars(mp.get_property(property, ""))})
         end
     end
 end
