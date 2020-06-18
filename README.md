@@ -41,13 +41,23 @@ In addition, you can press enter to run the jump command on the first result in 
 
 ## Keybinds
 
-The default commands are:
+The default keybinds are listed below, these can be overwritten using input.conf. Their purposes should be self evident:
 
     f12 script-binding search-keybinds
     Ctrl+f12 script-binding search-commands
     Shift+f12 script-binding search-properties
     Alt+f12 script-binding search-options
     Ctrl+Shift+Alt script-binding search-all
+
+In addition the following keybinds are dynamically created when the search page is open, these cannot currently be changed:
+
+    esc             closes the search page
+    down            scrolls the page down
+    up              scrolls the page up
+    enter           [see jumplist](#jumplist)
+    1-9             [see jumplist](#jumplist)
+
+The jumplist keys are only bound if the corresposnding result actually exists.
 
 
 ## Queries
