@@ -4,7 +4,7 @@ This script allows you to search for keybinds, properties, options and commands 
 The search is case insensitive by default, and the script sends the filter directly to a lua string match function, so you can use patterns to get more complex filtering. For options and limitations see the Queries and Flags sections.
 
 ## Pages
-There are 4 main search pages, the search page will remain open until the esc key is pressed.
+There are 4 main search pages, the search page will remain open until the esc key is pressed. When the search page is open the up and down arrow can be used to scroll through the results.
 
 ### Keybinds
 The keybind page is for searching keybindings. By default the script searches the name of the key; the command the key runs; the input section the key is part of; the owner of the key (typically the script that creates it); and any comments on the same line as the key in input.conf.
@@ -35,6 +35,8 @@ The option page contains the option name in lavendar, directly followed by the o
 The keybind and command pages have a jumplist implementation, while on the search page you can press the number keys, 1-9,
 to select the entry at that location. On the keybinds page it runs the command without exitting the page,
 on the commands page it exits the page and loads the command up into console.lua.
+
+In addition, you can press enter to run the jump command on the first result in the list. This can be useful when scrolling.
 
 
 ## Keybinds
@@ -103,7 +105,7 @@ Some ideas for future functionality:
 
 *   Add jumplists for properties and options
 *   Add multiple commands for each item using Ctrl,Alt, etc
-*   Implement scrolling
+*   ~~Implement scrolling~~
 *   Implement a cursor to select items for commands (same as jumplist)
 *   Search multiple queries at once (may already be possible with lua patterns)
 

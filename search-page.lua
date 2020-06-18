@@ -59,7 +59,7 @@ local o = {
     enable_jumplist = true,
 
     --there seems to be a significant performance hit from having lots of text off the screen
-    max_list = 30,
+    max_list = 28,
 
     --all colour options
     ass_header = "{\\c&H00ccff>&\\fs40\\b500\\q2}",
@@ -105,22 +105,36 @@ local results = {}
 
 local osd_display = mp.get_property_number('osd-duration')
 ov.hidden = true
+local search = {
+    start = 1,
+    keyword = "",
+    flags = ""
+}
 
-local dynamic_keybindings = {
-    "search_commands_key/1",
-    "search_commands_key/2",
-    "search_commands_key/3",
-    "search_commands_key/4",
-    "search_commands_key/5",
-    "search_commands_key/6",
-    "search_commands_key/7",
-    "search_commands_key/8",
-    "search_commands_key/9",
-    "search_commands_key/close_overlay"
+dynamic_keybindings = {
+    "search_page_key/down_page",
+    "search_page_key/up_page",
+    "search_page_key/close_overlay",
+    "search_page_key/run_current"
+}
+
+local jumplist_keys = {
+    "search_page_key/1",
+    "search_page_key/2",
+    "search_page_key/3",
+    "search_page_key/4",
+    "search_page_key/5",
+    "search_page_key/6",
+    "search_page_key/7",
+    "search_page_key/8",
+    "search_page_key/9"
 }
 
 --removes keybinds
 function remove_bindings()
+    for _,key in ipairs(jumplist_keys) do
+        mp.remove_key_binding(key)
+    end
     for _,key in ipairs(dynamic_keybindings) do
         mp.remove_key_binding(key)
     end
@@ -133,7 +147,13 @@ function close_overlay()
     remove_bindings()
 end
 
-function load_results(keyword, flags)
+--loads the results up onto the screen
+--is run for every scroll operation as well
+function load_results()
+    local start = search.start
+    local keyword = search.keyword
+    local flags = search.flags
+
     ov.data = ""
     if not flags then
         flags = ""
@@ -141,12 +161,29 @@ function load_results(keyword, flags)
         flags = " ("..flags..")"
     end
 
-    local header = ""
-    for i,result in ipairs(results) do
-        if i > o.max_list then
-            ov.data = ov.data .. "\n".. o.ass_footer.. #results - o.max_list .. " results remaining"
-            break
-        end
+    --if there are no results then a header will never be printed. We don't want that, so here we are
+    if #results == 0 then
+        ov.data = ov.data .. "\n" .. o.ass_header .. "No results for '" .. keyword .. "'"..flags.."\
+    "..o.ass_underline.."---------------------------------------------------------"
+        return
+    end
+
+    if o.enable_jumplist then
+        mp.remove_key_binding("search_page_key/run_current")
+        mp.add_forced_key_binding("ENTER", "search_page_key/run_current", results[search.start].funct)
+    end
+    local header = results[start].type
+    load_header(keyword, header, flags)
+
+    --prints the number of results above
+    if start > 1 then
+        ov.data = ov.data .. '\n'..o.ass_footer..(start-1).." results above"
+    end
+
+    --prints the results themselves
+    for i=start, start+o.max_list-1  do
+        local result = results[i]
+        if result == nil then break end
 
         if result.type ~= header then
             load_header(keyword, result.type, flags)
@@ -155,38 +192,55 @@ function load_results(keyword, flags)
         ov.data = ov.data .. '\n' .. result.line
     end
 
-    --if there are no results then a header will never be printed. We don't want that, so here we are
-    if header == "" then
-        ov.data = ov.data .. "\n" .. o.ass_header .. "No results for '" .. keyword .. "'"..flags.."\
-    "..o.ass_underline.."---------------------------------------------------------"
+    --prints the number of results left
+    if #results > start+o.max_list-1 then
+        ov.data = ov.data .. "\n".. o.ass_footer.. #results - (o.max_list+start-1) .. " results remaining"
     end
 end
 
 --enables the overlay
 function open_overlay()
-    --assigns the keybinds
-    for i,result in ipairs(results) do
-        if i < 10 and result.funct then
-            create_keybind(i, result.funct)
-        end
-    end
-
     ov.hidden = false
     ov:update()
-    mp.add_forced_key_binding("esc", dynamic_keybindings[10], close_overlay)
+
+    --assigns the keybinds
+
+    --scroll down
+    mp.add_forced_key_binding("DOWN", "search_page_key/down_page", function()
+        search.start = search.start+1
+        if search.start > #results then search.start = #results end
+        load_results()
+        ov:update()
+    end, {repeatable = true})
+
+    --scroll up
+    mp.add_forced_key_binding("UP", "search_page_key/up_page", function()
+        search.start = search.start-1
+        if search.start < 1 then search.start = 1 end
+        load_results()
+        ov:update()
+    end, {repeatable = true})
+
+    --close search page
+    mp.add_forced_key_binding("ESC", "search_page_key/close_overlay", close_overlay)
+
+    --sets the jumplist commands
+    if not o.enable_jumplist then return end
+    for i,result in ipairs(results) do
+        if i < 10 and result.funct then
+            mp.add_forced_key_binding(tostring(i), jumplist_keys[i], result.funct)
+        end
+    end
 end
 
 --replaces any characters that ass can't display normally
 --currently this is just curly brackets
 function fix_chars(str)
     str = tostring(str)
+    str = str:gsub([[\]], [[\ ]])
     str = str:gsub('{', "\\{")
     str = str:gsub('}', "\\}")
     return str
-end
-
-function create_keybind(num_entry, funct)
-    mp.add_forced_key_binding(tostring(num_entry), dynamic_keybindings[num_entry], funct)
 end
 
 --loads the header for the search page
@@ -405,7 +459,10 @@ mp.register_script_message('search_page/input', function(type, keyword, flags)
 
     mp.command("script-binding console/_console_1")
     remove_bindings()
-    load_results(keyword, flagsstr)
+    search.keyword = keyword
+    search.flags = flagsstr
+    search.start = 1
+    load_results()
     open_overlay()
 end)
 
