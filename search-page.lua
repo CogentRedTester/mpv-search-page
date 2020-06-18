@@ -114,7 +114,8 @@ local search = {
 dynamic_keybindings = {
     "search_page_key/down_page",
     "search_page_key/up_page",
-    "search_page_key/close_overlay"
+    "search_page_key/close_overlay",
+    "search_page_key/run_current"
 }
 
 local jumplist_keys = {
@@ -139,6 +140,11 @@ function remove_bindings()
     end
 end
 
+function reset_current_funct()
+    mp.remove_key_binding("search_page_key/run_current")
+    mp.add_forced_key_binding("ENTER", "search_page_key/run_current", results[search.start].funct)
+end
+
 --closes the overlay and removes bindings
 function close_overlay()
     ov.hidden = true
@@ -146,6 +152,8 @@ function close_overlay()
     remove_bindings()
 end
 
+--loads the results up onto the screen
+--is run for every scroll operation as well
 function load_results()
     local start = search.start
     if page == nil then page = 1 end
@@ -166,13 +174,16 @@ function load_results()
         return
     end
 
-    -- local start = (o.max_list * (page-1)) + 1
+    reset_current_funct()
     local header = results[start].type
     load_header(keyword, header, flags)
 
+    --prints the number of results above
     if start > 1 then
         ov.data = ov.data .. '\n'..o.ass_footer..(start-1).." results above"
     end
+
+    --prints the results themselves
     for i=start, start+o.max_list-1  do
         local result = results[i]
         if result == nil then break end
@@ -184,6 +195,7 @@ function load_results()
         ov.data = ov.data .. '\n' .. result.line
     end
 
+    --prints the number of results left
     if #results > start+o.max_list-1 then
         ov.data = ov.data .. "\n".. o.ass_footer.. #results - (o.max_list+start-1) .. " results remaining"
     end
@@ -225,6 +237,7 @@ end
 --currently this is just curly brackets
 function fix_chars(str)
     str = tostring(str)
+    str = str:gsub([[\]], [[\ ]])
     str = str:gsub('{', "\\{")
     str = str:gsub('}', "\\}")
     return str
