@@ -140,11 +140,6 @@ function remove_bindings()
     end
 end
 
-function reset_current_funct()
-    mp.remove_key_binding("search_page_key/run_current")
-    mp.add_forced_key_binding("ENTER", "search_page_key/run_current", results[search.start].funct)
-end
-
 --closes the overlay and removes bindings
 function close_overlay()
     ov.hidden = true
@@ -156,7 +151,6 @@ end
 --is run for every scroll operation as well
 function load_results()
     local start = search.start
-    if page == nil then page = 1 end
     local keyword = search.keyword
     local flags = search.flags
 
@@ -174,7 +168,10 @@ function load_results()
         return
     end
 
-    reset_current_funct()
+    if o.enable_jumplist then
+        mp.remove_key_binding("search_page_key/run_current")
+        mp.add_forced_key_binding("ENTER", "search_page_key/run_current", results[search.start].funct)
+    end
     local header = results[start].type
     load_header(keyword, header, flags)
 
