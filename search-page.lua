@@ -198,30 +198,33 @@ function load_results()
     end
 end
 
-function create_keybind(num_entry, funct)
-    mp.add_forced_key_binding(tostring(num_entry), dynamic_keybindings[num_entry], funct)
-end
-
 --enables the overlay
 function open_overlay()
     ov.hidden = false
     ov:update()
 
     --assigns the keybinds
+
+    --scroll down
     mp.add_forced_key_binding("DOWN", "search_page_key/down_page", function()
         search.start = search.start+1
         if search.start > #results then search.start = #results end
         load_results()
         ov:update()
     end, {repeatable = true})
+
+    --scroll up
     mp.add_forced_key_binding("UP", "search_page_key/up_page", function()
         search.start = search.start-1
         if search.start < 1 then search.start = 1 end
         load_results()
         ov:update()
     end, {repeatable = true})
+
+    --close search page
     mp.add_forced_key_binding("ESC", "search_page_key/close_overlay", close_overlay)
 
+    --sets the jumplist commands
     if not o.enable_jumplist then return end
     for i,result in ipairs(results) do
         if i < 10 and result.funct then
