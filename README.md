@@ -4,7 +4,9 @@ This script allows you to search for keybinds, properties, options and commands 
 The search is case insensitive by default, and the script sends the filter directly to a lua string match function, so you can use patterns to get more complex filtering. For options and limitations see the Queries and Flags sections.
 
 ## Pages
-There are 4 main search pages, the search page will remain open until the esc key is pressed. When the search page is open the up and down arrow can be used to scroll through the results.
+The search page will remain open until the esc key is pressed. When the search page is open the up and down arrow can be used to scroll through the results, and the left and right arrows can be used to pan horizontally to see any cut off values.
+
+There are 4 main search pages:
 
 ### Keybinds
 The keybind page is for searching keybindings. By default the script searches the name of the key; the command the key runs; the input section the key is part of; the owner of the key (typically the script that creates it); and any comments on the same line as the key in input.conf.
@@ -54,6 +56,8 @@ In addition the following keybinds are dynamically created when the search page 
     esc             closes the search page
     down            scrolls the page down
     up              scrolls the page up
+    left            pans the whole search page left
+    right           pans the whole search page right
     enter           [see jumplist](#jumplist)
     1-9             [see jumplist](#jumplist)
 
