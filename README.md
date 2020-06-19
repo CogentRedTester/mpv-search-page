@@ -32,24 +32,15 @@ The options page is for searching options that can be set on the commandline or 
 
 The option page contains the option name in lavendar, directly followed by the option type in small yellow brackets. The cyan entry is the current value of the option, if available, and the yellow is the default option value. The green value shows different information depending on the option type; if the option is a float, integer, double, aspect, or bytesize, then the valid option range is displayed; if the option is a choice, then the valid choices are listed.
 
-## Jumplist
-
-The keybind and command pages have a jumplist implementation, while on the search page you can press the number keys, 1-9,
-to select the entry at that location. On the keybinds page it runs the command without exitting the page,
-on the commands page it exits the page and loads the command up into console.lua.
-
-In addition, you can press enter to run the jump command on the first result in the list. This can be useful when scrolling.
-
-
 ## Keybinds
 
 The default keybinds are listed below, these can be overwritten using input.conf. Their purposes should be self evident:
 
-    f12 script-binding search-keybinds
-    Ctrl+f12 script-binding search-commands
-    Shift+f12 script-binding search-properties
-    Alt+f12 script-binding search-options
-    Ctrl+Shift+Alt script-binding search-all
+    f12             script-binding search-keybinds
+    Ctrl+f12        script-binding search-commands
+    Shift+f12       script-binding search-properties
+    Alt+f12         script-binding search-options
+    Ctrl+Shift+Alt  script-binding search-all
 
 In addition the following keybinds are dynamically created when the search page is open, these cannot currently be changed:
 
@@ -58,21 +49,29 @@ In addition the following keybinds are dynamically created when the search page 
     up              scrolls the page up
     left            pans the whole search page left
     right           pans the whole search page right
-    enter           [see jumplist](#jumplist)
-    1-9             [see jumplist](#jumplist)
+    enter           see jumplist
+    1-9             see jumplist
 
 The jumplist keys are only bound if the corresposnding result actually exists.
 
 
 ## Queries
 
-Once the command is sent the console will open with a pre-entered search command, simply add a query string as the first argument.
-Using the above keybinds will pre-enter the raw query command into the console, but you can modify it to search multiple criteria at once.
+When the default f12 keybinds are used, console.lua will open with a pre-entered query command and the query type argument already entered, You then just need to type the search string and press enter.
 
 The raw command is:
 
     script-message search_page/input [query types] [query string] {flags}
 
+Here is an example of a query to search keybinds for 'del':
+
+    script-message search_page/input %key del
+
+ Queries can have spaces in them, but if so they must be enclosed in double quotes:
+
+    script-message search_page/input %key "cycle vid"
+
+Query types can also be combined, i.e. `key$cmd$`, to search multiple categories at once.
 The valid query types are as follows:
 
     key$    searches keybindings
@@ -81,9 +80,7 @@ The valid query types are as follows:
     opt$    searches options
     all$    searches all
 
-These queries can be combined, i.e. `key$cmd$` to search multiple categories at once. Queries can have spaces in them, but if so they must be enclosed in brackets.
-
-Sending a query message without any arguments (or with only the type argument) will reopen the last search page.
+Sending a query message without any arguments (or with only the type argument) will reopen the last search page. Sending a query with an empty string `""` will show all results for the selected category.
 
 ## Lua Patterns
 
@@ -91,7 +88,7 @@ This script sends queries directly into the Lua string find function, with the o
 
 ## Flags
 
-By default the script will convert both the search query, and all the strings it scans into lower case for a wider range of results. It returns any result that contains the full query somewhere in its values. Flags can be used to modify this behaviour. Flags are strings you can add after query, currently there are 3:
+By default the script will convert both the search query, and all the strings it scans into lower case to maximise the number of results. It returns any result that contains the full query somewhere in its values. Flags can be used to modify this behaviour. Flags are an argument you can add after the query string, currently there are 3:
 
         wrap        search for a whole word only (may not work with some symbols)
         pattern     don't convert the query to lowercase, required for some Lua patterns
@@ -101,15 +98,25 @@ These flags can be combined, so for example a query `t wrap` would normally resu
 `f%A wrap+pattern` will return all complete words containing f followed by a non-letter. Often `exact` will work just fine for this,
 but in this example we might still want to find upper-case keys, like function keys, so using just `pattern` can be more useful.
 
-These flags may be subject to change
+Here is an example of a query to list all function keybinds:
 
+    script-message search_page/input $key f%d%d? wrap
+
+## Jumplist
+
+The keybind and command pages have a jumplist implementation, while on the search page you can press the number keys, 1-9,
+to select the entry at that location. On the keybinds page it runs the command without exitting the page,
+on the commands page it exits the page and loads the command up into console.lua.
+
+In addition, you can press enter to run the jump command on the first result in the list. This can be useful when scrolling.
 
 ## Options
 
 Search page will read several options from script-opts when the player is lanched, the current options, and their defaults are:
 
-    enable_jumplist = yes   #this disables the jumplist keybinds
-    max_list = 30           #this defines how many search results to show
+    enable_jumplist = yes   #disables the jumplist keybinds
+    max_list = 30           #number of search results to show
+    pan_speed = 100         #horizontal pixels to pan on each keypress
 
 In addition there are a sizeable number of options to customise the ass tags that the page uses. This theoretically allows you to customise the page in almost any way you like. There are far too many to show here, the full list is near the top of the script.
 
