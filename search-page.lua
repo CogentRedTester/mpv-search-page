@@ -159,7 +159,7 @@ end
 --loads the header for the search page
 function load_header(keyword, name, flags)
     if name == nil then name = "" end
-    ov.data = ov.data .. "\\N" .. o.ass_header .. "Search results for " .. name .. '"' .. keyword .. '"'..flags.."\\N"..o.ass_underline.."---------------------------------------------------------"
+    ov.data = ov.data .. "\\N" .. o.ass_header .. "Search results for " .. name .. ' "' .. keyword .. '"'..flags.."\\N"..o.ass_underline.."---------------------------------------------------------"
 end
 
 --loads the results up onto the screen
@@ -195,21 +195,25 @@ function load_results()
         ov.data = ov.data .. '\\N'..o.ass_footer..(start-1).." results above"
     end
 
+    local max = o.max_list
     --prints the results themselves
-    for i=start, start+o.max_list-1  do
+    local i = start
+    while i < start+max  do
         local result = results[i]
         if result == nil then break end
 
         if result.type ~= header then
             load_header(keyword, result.type, flags)
             header = result.type
+            max = max - 5
         end
         ov.data = ov.data .. '\\N' .. result.line
+        i = i + 1
     end
 
     --prints the number of results left
-    if #results > start+o.max_list-1 then
-        ov.data = ov.data .. "\\N".. o.ass_footer.. #results - (o.max_list+start-1) .. " results remaining"
+    if #results > i then
+        ov.data = ov.data .. "\\N".. o.ass_footer.. #results - i .. " results remaining"
     end
 end
 
@@ -393,7 +397,7 @@ function search_commands(keyword, flags)
             result = result .. "\\N"
 
             table.insert(results, {
-                type = "cmd",
+                type = "command",
                 line = result,
                 funct = function()
                     mp.commandv('script-message-to', 'console', 'type', command.name .. " ")
