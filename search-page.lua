@@ -80,7 +80,7 @@ local o = {
     ass_comment = "{\\c&H33ff66>&}",
 
     --colours for commands page
-    ass_cmd = "{\\c&Hffccff>\\fs20}",
+    ass_cmd = "{\\c&Hffccff>\\fs20\\q2}",
     ass_args = "{\\fs20\\c&H33ff66>&}",
     ass_optargs = "{\\fs20\\c&Hffff00>&}",
     ass_argtype = "{\\c&H00cccc>&}{\\fs12}",
