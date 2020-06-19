@@ -323,7 +323,7 @@ function search_keys(keyword, flags)
                 funct = function()
                     ov.hidden = true
                     ov:update()
-                    mp.command(cmd)
+                    mp.command(keybind.cmd)
 
                     mp.add_timeout(osd_display/1000, function()
                         ov.hidden = false
@@ -363,7 +363,7 @@ function search_commands(keyword, flags)
                 type = "cmd",
                 line = result,
                 funct = function()
-                    mp.commandv('script-message-to', 'console', 'type', cmd .. " ")
+                    mp.commandv('script-message-to', 'console', 'type', command.name .. " ")
                     close_overlay()
                     msg.info("")
                     msg.info(result_no_ass)
