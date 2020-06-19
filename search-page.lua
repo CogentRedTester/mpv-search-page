@@ -1,4 +1,6 @@
 --[[
+    For the full documentation see: https://github.com/CogentRedTester/mpv-search-page
+
     This script allows you to search for keybinds, properties, options and commands and have matching entries display on the OSD.
     The search is case insensitive, and the script sends the filter directly to a lua string match function,
     so you can use patterns to get more complex filtering.
@@ -61,6 +63,10 @@ local o = {
     --there seems to be a significant performance hit from having lots of text off the screen
     max_list = 28,
 
+    --number of pixels to pan on each click
+    --this refers to the horizontal panning
+    pan_speed = 100,
+
     --all colour options
     ass_header = "{\\c&H00ccff>&\\fs40\\b500\\q2}",
     ass_underline = "{\\c&00ccff>&\\fs30\\b100\\q2}",
@@ -74,7 +80,7 @@ local o = {
     ass_comment = "{\\c&H33ff66>&}",
 
     --colours for commands page
-    ass_cmd = "{\\c&Hffccff>\\fs20}",
+    ass_cmd = "{\\c&Hffccff>\\fs20\\q2}",
     ass_args = "{\\fs20\\c&H33ff66>&}",
     ass_optargs = "{\\fs20\\c&Hffff00>&}",
     ass_argtype = "{\\c&H00cccc>&}{\\fs12}",
@@ -106,6 +112,7 @@ local results = {}
 local osd_display = mp.get_property_number('osd-duration')
 ov.hidden = true
 local search = {
+    posX = 25,
     start = 1,
     keyword = "",
     flags = ""
@@ -115,7 +122,9 @@ dynamic_keybindings = {
     "search_page_key/down_page",
     "search_page_key/up_page",
     "search_page_key/close_overlay",
-    "search_page_key/run_current"
+    "search_page_key/run_current",
+    "search_page_key/pan_left",
+    "search_page_key/pan_right"
 }
 
 local jumplist_keys = {
@@ -147,6 +156,12 @@ function close_overlay()
     remove_bindings()
 end
 
+--loads the header for the search page
+function load_header(keyword, name, flags)
+    if name == nil then name = "" end
+    ov.data = ov.data .. "\\N" .. o.ass_header .. "Search results for " .. name .. ' "' .. keyword .. '"'..flags.."\\N"..o.ass_underline.."---------------------------------------------------------"
+end
+
 --loads the results up onto the screen
 --is run for every scroll operation as well
 function load_results()
@@ -154,7 +169,7 @@ function load_results()
     local keyword = search.keyword
     local flags = search.flags
 
-    ov.data = ""
+    ov.data = "{\\pos("..search.posX..",0)\\an7}"
     if not flags then
         flags = ""
     else
@@ -163,7 +178,7 @@ function load_results()
 
     --if there are no results then a header will never be printed. We don't want that, so here we are
     if #results == 0 then
-        ov.data = ov.data .. "\n" .. o.ass_header .. "No results for '" .. keyword .. "'"..flags.."\
+        ov.data = ov.data .. "\\N" .. o.ass_header .. "No results for '" .. keyword .. "'"..flags.."\
     "..o.ass_underline.."---------------------------------------------------------"
         return
     end
@@ -177,28 +192,33 @@ function load_results()
 
     --prints the number of results above
     if start > 1 then
-        ov.data = ov.data .. '\n'..o.ass_footer..(start-1).." results above"
+        ov.data = ov.data .. '\\N'..o.ass_footer..(start-1).." results above"
     end
 
+    local max = o.max_list
     --prints the results themselves
-    for i=start, start+o.max_list-1  do
+    local i = start
+    while i < start+max  do
         local result = results[i]
         if result == nil then break end
 
         if result.type ~= header then
             load_header(keyword, result.type, flags)
             header = result.type
+            max = max - 5
         end
-        ov.data = ov.data .. '\n' .. result.line
+        ov.data = ov.data .. '\\N' .. result.line
+        i = i + 1
     end
 
     --prints the number of results left
-    if #results > start+o.max_list-1 then
-        ov.data = ov.data .. "\n".. o.ass_footer.. #results - (o.max_list+start-1) .. " results remaining"
+    if #results > i then
+        ov.data = ov.data .. "\\N".. o.ass_footer.. #results - i .. " results remaining"
     end
 end
 
 --enables the overlay
+--and sets keybinds
 function open_overlay()
     ov.hidden = false
     ov:update()
@@ -208,7 +228,10 @@ function open_overlay()
     --scroll down
     mp.add_forced_key_binding("DOWN", "search_page_key/down_page", function()
         search.start = search.start+1
-        if search.start > #results then search.start = #results end
+        if search.start > #results then
+            search.start = #results
+            return
+        end
         load_results()
         ov:update()
     end, {repeatable = true})
@@ -216,7 +239,28 @@ function open_overlay()
     --scroll up
     mp.add_forced_key_binding("UP", "search_page_key/up_page", function()
         search.start = search.start-1
-        if search.start < 1 then search.start = 1 end
+        if search.start < 1 then
+            search.start = 1
+            return
+        end
+        load_results()
+        ov:update()
+    end, {repeatable = true})
+
+    --pan right
+    mp.add_forced_key_binding("RIGHT", "search_page_key/pan_right", function()
+        search.posX = search.posX - o.pan_speed
+        load_results()
+        ov:update()
+    end, {repeatable = true})
+
+    --pan left
+    mp.add_forced_key_binding("LEFT", "search_page_key/pan_left", function()
+        search.posX = search.posX + o.pan_speed
+        if search.posX > 25 then
+            search.posX = 25
+            return
+        end
         load_results()
         ov:update()
     end, {repeatable = true})
@@ -241,13 +285,6 @@ function fix_chars(str)
     str = str:gsub('{', "\\{")
     str = str:gsub('}', "\\}")
     return str
-end
-
---loads the header for the search page
-function load_header(keyword, name, flags)
-    if name == nil then name = "" end
-    ov.data = ov.data .. "\n" .. o.ass_header .. "Search results for " .. name .. " '" .. keyword .. "'"..flags.."\
-    "..o.ass_underline.."---------------------------------------------------------"
 end
 
 --handles the search queries
@@ -360,7 +397,7 @@ function search_commands(keyword, flags)
             result = result .. "\\N"
 
             table.insert(results, {
-                type = "cmd",
+                type = "command",
                 line = result,
                 funct = function()
                     mp.commandv('script-message-to', 'console', 'type', command.name .. " ")
