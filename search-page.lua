@@ -92,7 +92,7 @@ local o = {
     --colours for options list
     ass_options = "{\\c&Hffccff>\\fs20\\q2}",
     ass_optvalue = "{\\fs20\\c&Hffff00>&}",
-    ass_optionstype = "{\\c&H00cccc>&}{\\fs12}",
+    ass_optionstype = "{\\c&H00cccc>&}{\\fs20}",
     ass_optionsdefault = "{\\c&H00cccc>&}",
     --list of choices for choice options, ranges for numeric options
     ass_optionsspec = "{\\c&H33ff66>&\\fs20}",
@@ -393,7 +393,7 @@ function search_commands(keyword, flags)
                 if arg.optional then
                     result = result .. o.ass_optargs
                 else
-                    result_no_ass = result_no_ass .. "!"
+                    result_no_ass = result_no_ass .. " !"
                     result = result .. o.ass_args
                 end
                 result_no_ass = result_no_ass .. arg.name .. "("..arg.type..") "
