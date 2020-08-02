@@ -211,8 +211,8 @@ function load_results()
     end
 
     --prints the number of results left
-    if #results > i then
-        ov.data = ov.data .. "\\N".. o.ass_footer.. #results - i .. " results remaining"
+    if #results >= i then
+        ov.data = ov.data .. "\\N".. o.ass_footer.. #results - i + 1 .. " results remaining"
     end
 end
 
