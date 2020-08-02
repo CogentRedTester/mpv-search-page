@@ -178,8 +178,7 @@ function load_results()
 
     --if there are no results then a header will never be printed. We don't want that, so here we are
     if #results == 0 then
-        ov.data = ov.data .. "\\N" .. o.ass_header .. "No results for '" .. keyword .. "'"..flags.."\
-    "..o.ass_underline.."---------------------------------------------------------"
+        ov.data = ov.data .. "\\N" .. o.ass_header .. "No results for '" .. keyword .. "'"..flags.."\\N"..o.ass_underline.."---------------------------------------------------------"
         return
     end
 
