@@ -331,7 +331,15 @@ function search_keys(keyword, flags)
         --console keybinds are ignored because it is automatically closed after
         --sending the command and would otherwise always override many basic keybinds
         if keybind.priority >= 0 and keybind.section ~= "input_forced_console" then
-            keybound[keybind.key] = keybind.cmd
+            if keybound[keybind.key] == nil then
+                keybound[keybind.key] = {
+                    priority = -1
+                }
+            end
+            if keybind.priority >= keybound[keybind.key].priority then
+                keybound[keybind.key].cmd = keybind.cmd
+                keybound[keybind.key].priority = keybind.priority
+            end
         end
         if
         compare(keybind.key, keyword, flags)
@@ -385,7 +393,7 @@ function search_keys(keyword, flags)
 
     --does a second pass of the results and greys out any overwritten keys
     for _,v in ipairs(results) do
-        if keybound[v.key] ~= v.cmd then
+        if keybound[v.key] and keybound[v.key].cmd ~= v.cmd then
             v.line = "{\\alpha&H80&}"..v.line.."{\\alpha&H00&}"
         end
         v.key = nil
