@@ -15,6 +15,8 @@ The search page shows the key name in lavendar on the left, then the command in 
 
 Pressing keys 1-9 will send the command for that respective entry.
 
+Keybinds which are disabled or overridden will be shown at 50% opacity.
+
 ### Commands
 The command page displays input commands that can be used in input.conf or the console, as well as their arguments. The script only searches the name of the commands.
 
