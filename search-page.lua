@@ -324,8 +324,15 @@ end
 --search keybinds
 function search_keys(keyword, flags)
     local keys = mp.get_property_native('input-bindings')
+    local keybound = {}
 
     for _,keybind in ipairs(keys) do
+        --saves the cmd for that key so we can grey out the overwritten keys
+        --console keybinds are ignored because it is automatically closed after
+        --sending the command and would otherwise always override many basic keybinds
+        if keybind.priority >= 0 and keybind.section ~= "input_forced_console" then
+            keybound[keybind.key] = keybind.cmd
+        end
         if
         compare(keybind.key, keyword, flags)
         or compare(keybind.cmd, keyword, flags)
@@ -360,6 +367,8 @@ function search_keys(keyword, flags)
             table.insert(results, {
                 type = "key",
                 line = o.ass_allkeybindresults .. o.ass_key .. key .. o.ass_section .. section .. o.ass_cmdkey .. cmd .. o.ass_comment .. comment,
+                key = keybind.key,
+                cmd = keybind.cmd,
                 funct = function()
                     ov.hidden = true
                     ov:update()
@@ -372,6 +381,15 @@ function search_keys(keyword, flags)
                 end
             })
         end
+    end
+
+    --does a second pass of the results and greys out any overwritten keys
+    for _,v in ipairs(results) do
+        if keybound[v.key] ~= v.cmd then
+            v.line = "{\\alpha&H80&}"..v.line.."{\\alpha&H00&}"
+        end
+        v.key = nil
+        v.cmd = nil
     end
 end
 
