@@ -348,7 +348,7 @@ function search_keys(keyword, flags)
 
             --add comments to entry
             if keybind.comment ~= nil then
-                comment = string.rep(" ", 8) .. "#" .. keybind.comment
+                comment = return_spaces(key:len()+section:len()+cmd:len(),60) .. "#" .. keybind.comment
             end
 
             key = fix_chars(key)
@@ -462,7 +462,7 @@ function search_property(keyword, flags)
         if compare(property, keyword, flags) then
             table.insert(results, {
                 type = "property",
-                line = o.ass_properties .. property .. return_spaces(property:len(), 25) .. o.ass_propertycurrent .. fix_chars(mp.get_property(property, ""))})
+                line = o.ass_properties .. property .. return_spaces(property:len(), 35) .. o.ass_propertycurrent .. fix_chars(mp.get_property(property, ""))})
         end
     end
 end
