@@ -1,5 +1,7 @@
 # mpv-search-page
 
+![image](screenshots/standard_query.png)
+
 This script allows you to search for keybinds, properties, options and commands and have matching entries display on the OSD.
 The search is case insensitive by default, and the script sends the filter directly to a lua string match function, so you can use patterns to get more complex filtering. For options and limitations see the Queries and Flags sections.
 
@@ -9,6 +11,8 @@ The search page will remain open until the esc key is pressed. When the search p
 There are 4 main search pages:
 
 ### Keybinds
+![keybinds_page](screenshots/keybindings_page.png)
+
 The keybind page is for searching keybindings. By default the script searches the name of the key; the command the key runs; the input section the key is part of; the owner of the key (typically the script that creates it); and any comments on the same line as the key in input.conf.
 
 The search page shows the key name in lavendar on the left, then the command in cyan, and finally the comment in green, preceeded by a `#`. In addition, if the keybinding is part of a section other than the default, the section will be printed in yellow brackets between the key name and the command.
@@ -18,6 +22,8 @@ Pressing keys 1-9 will send the command for that respective entry.
 Keybinds which are disabled or overridden will be shown at 50% opacity.
 
 ### Commands
+![commands_page](screenshots/command_page.png)
+
 The command page displays input commands that can be used in input.conf or the console, as well as their arguments. The script only searches the name of the commands.
 
 The search page shows all of the command names in lavendar on the left. The following words are arguments that the command takes, green arguments are compulsory, while cyan are optional. Each argument contains its type in small yellow brackets. Note that the type, and colour-coding is taken straight from the lua API, so it may not always be correct.
@@ -25,14 +31,18 @@ The search page shows all of the command names in lavendar on the left. The foll
 Pressing keys 1-9 will load the command for that respective entry into console.lua, and print the arguments and thier types to the console for reference. Compulsory arguments will have an exclamation mark before them.
 
 ### Properties
+![property_page](screenshots/property_page.png)
+
 The properties page shows all of the properties, and their current values, for the current file. Only the property name is included in the search. Note that the property list contains most options as well.
 
 The search page simply contains the property name on the left, followed by it's current value (if it has one).
 
 ### Options
+![option_page](screenshots/option_page.png)
+
 The options page is for searching options that can be set on the commandline or through mpv.conf. Most of these options have matching properties. The script searches the option name, as well as any choices that are available.
 
-The option page contains the option name in lavendar, directly followed by the option type in small yellow brackets. The cyan entry is the current value of the option, if available, and the yellow is the default option value. The green value shows different information depending on the option type; if the option is a float, integer, double, aspect, or bytesize, then the valid option range is displayed; if the option is a choice, then the valid choices are listed.
+The option page contains the option name in lavendar, directly followed by the option type in yellow. The cyan entry is the current value of the option, if available, and the yellow is the default option value. The green value shows different information depending on the option type; if the option is a float, integer, double, aspect, or bytesize, then the valid option range is displayed; if the option is a choice, then the valid choices are listed.
 
 ## Keybinds
 
@@ -58,6 +68,7 @@ The jumplist keys are only bound if the corresposnding result actually exists.
 
 
 ## Queries
+![query_example](screenshots/REPL_input.png)
 
 When the default f12 keybinds are used, console.lua will open with a pre-entered query command and the query type argument already entered, You then just need to type the search string and press enter.
 
@@ -67,11 +78,11 @@ The raw command is:
 
 Here is an example of a query to search keybinds for 'del':
 
-    script-message search_page/input %key del
+    script-message search_page/input key$ del
 
  Queries can have spaces in them, but if so they must be enclosed in double quotes:
 
-    script-message search_page/input %key "cycle vid"
+    script-message search_page/input key$ "cycle vid"
 
 Query types can also be combined, i.e. `key$cmd$`, to search multiple categories at once.
 The valid query types are as follows:
