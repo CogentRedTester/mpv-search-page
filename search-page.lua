@@ -83,7 +83,7 @@ local o = {
     ass_cmd = "{\\c&Hffccff>\\fs20\\q2}",
     ass_args = "{\\fs20\\c&H33ff66>&}",
     ass_optargs = "{\\fs20\\c&Hffff00>&}",
-    ass_argtype = "{\\c&H00cccc>&\\fs20}",
+    ass_argtype = "{\\c&H00cccc>&\\fs12}",
 
     --colours for property list
     ass_properties = "{\\c&Hffccff>\\fs20\\q2}",
