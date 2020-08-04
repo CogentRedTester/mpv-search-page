@@ -70,7 +70,7 @@ The jumplist keys are only bound if the corresposnding result actually exists.
 ## Queries
 ![query_example](screenshots/REPL_input.png)
 
-When the default f12 keybinds are used, console.lua will open with a pre-entered query command and the query type argument already entered, You then just need to type the search string and press enter.
+When the default f12 keybinds are used, console.lua will open with a pre-entered query command and the query type argument already entered. You then just need to type the search string and press enter.
 
 The raw command is:
 
@@ -113,7 +113,7 @@ but in this example we might still want to find upper-case keys, like function k
 
 Here is an example of a query to list all function keybinds:
 
-    script-message search_page/input $key f%d%d? wrap
+    script-message search_page/input key$ f%d%d? wrap
 
 ## Jumplist
 
