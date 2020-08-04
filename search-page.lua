@@ -476,7 +476,7 @@ function search_options(keyword, flags)
 
             table.insert(results, {
                 type = "option",
-                line = result..o.ass_optionsspec..options_spec})
+                line = result.. return_spaces(result:len(), 140) .. o.ass_optionsspec..options_spec})
         end
     end
 end
