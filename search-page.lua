@@ -280,7 +280,11 @@ end
 --currently this is just curly brackets
 function fix_chars(str)
     str = tostring(str)
-    str = str:gsub([[\]], [[\ ]])
+
+    --some escapes I took from console.lua
+    str = str:gsub('\\', '\\\239\187\191')
+    str = str:gsub('\n', '  ')
+
     str = str:gsub('{', "\\{")
     str = str:gsub('}', "\\}")
     return str
