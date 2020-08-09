@@ -48,11 +48,11 @@ The option page contains the option name in lavendar, directly followed by the o
 
 The default keybinds are listed below, these can be overwritten using input.conf. Their purposes should be self evident:
 
-    f12             script-binding search-keybinds
-    Ctrl+f12        script-binding search-commands
-    Shift+f12       script-binding search-properties
-    Alt+f12         script-binding search-options
-    Ctrl+Shift+Alt  script-binding search-all
+    f12                 script-binding search-keybinds
+    Ctrl+f12            script-binding search-commands
+    Shift+f12           script-binding search-properties
+    Alt+f12             script-binding search-options
+    Ctrl+Shift+Alt+f12  script-binding search-all
 
 In addition the following keybinds are dynamically created when the search page is open, these cannot currently be changed:
 
