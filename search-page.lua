@@ -159,7 +159,7 @@ end
 --loads the header for the search page
 function load_header(keyword, name, flags)
     if name == nil then name = "" end
-    ov.data = ov.data .. "\\N" .. o.ass_header .. "Search results for " .. name .. ' "' .. keyword .. '"'..flags.."\\N"..o.ass_underline.."---------------------------------------------------------"
+    ov.data = ov.data .. "\\N" .. o.ass_header .. "Search results for " .. name .. ' "' .. fix_chars(keyword) .. '"'..flags.."\\N"..o.ass_underline.."---------------------------------------------------------"
 end
 
 --loads the results up onto the screen
@@ -413,26 +413,26 @@ function search_commands(keyword, flags)
         if
         compare(command.name, keyword, flags)
         then
-            local cmd = fix_chars(command.name)
+            local cmd = command.name
             local result_no_ass = cmd
 
-            --add set number of spaces
-            local result = o.ass_cmd .. cmd .. return_spaces(cmd:len(), 20)
+            local arg_string = ""
 
             for _,arg in ipairs(command.args) do
                 if arg.optional then
-                    result = result .. o.ass_optargs
+                    arg_string = arg_string .. o.ass_optargs
+                    result_no_ass = result_no_ass .. " "
                 else
                     result_no_ass = result_no_ass .. " !"
-                    result = result .. o.ass_args
+                    arg_string = arg_string .. o.ass_args
                 end
                 result_no_ass = result_no_ass .. arg.name .. "("..arg.type..") "
-                result = result .. " " .. arg.name .. o.ass_argtype.." ("..arg.type..") "
+                arg_string = arg_string .. " " .. arg.name .. o.ass_argtype.." ("..arg.type..") "
             end
 
             table.insert(results, {
                 type = "command",
-                line = result,
+                line = o.ass_cmd..fix_chars(cmd)..return_spaces(cmd:len(), 20)..arg_string,
                 funct = function()
                     mp.commandv('script-message-to', 'console', 'type', command.name .. " ")
                     close_overlay()
@@ -455,32 +455,38 @@ function search_options(keyword, flags)
         or compare(choices, keyword, flags)
         then
             local type = mp.get_property_osd('option-info/'..option..'/type', '')
-            local opt_value = fix_chars(mp.get_property_osd('options/'..option, ""))
 
-            local result = o.ass_options..fix_chars(option).."  "..o.ass_optionstype..type..return_spaces(option:len()+type:len()+2, 35)
-            local result = result..o.ass_optvalue.."= "..opt_value
+            --we're saving the string lengths as an incrementing variable so that
+            --ass modifiers don't bloat the string. This is for calculating spaces
+            local length_no_ass = type:len() + option:len()
+            local first_space = return_spaces(length_no_ass, 40)
 
-            -- local whitespace = 60 - (option:len() + option_type:len() + opt_value:len())
-            -- if whitespace < 4 then whitespace = 4 end
-            -- whitespace = string.rep(" ", whitespace)
-            local default =fix_chars(mp.get_property_osd('option-info/'..option..'/default-value', ""))
-            local result = result..return_spaces(result:len(), 115)..o.ass_optionsdefault..default
+            local opt_value = "= "..mp.get_property_osd('options/'..option, "")
+            length_no_ass = length_no_ass + first_space:len() + opt_value:len()
+            local second_space = return_spaces(length_no_ass, 60)
+
+            local default =mp.get_property_osd('option-info/'..option..'/default-value', "")
+            length_no_ass = length_no_ass + default:len() + second_space:len()
+            local third_space = return_spaces(length_no_ass, 70)
 
             local options_spec = ""
 
             if type == "Choice" then
-                options_spec = fix_chars("    [ " .. choices .. ' ]')
+                options_spec = "    [ " .. choices .. ' ]'
             elseif type == "Integer"
             or type == "ByteSize"
             or type == "Float"
             or type == "Aspect"
             or type == "Double" then
-                options_spec = fix_chars("    [ "..mp.get_property_number('option-info/'..option..'/min', "").."  -  ".. mp.get_property_number("option-info/"..option..'/max', "").." ]")
+                options_spec = "    [ "..mp.get_property_number('option-info/'..option..'/min', "").."  -  ".. mp.get_property_number("option-info/"..option..'/max', "").." ]"
             end
 
+            local result = o.ass_options..fix_chars(option).."  "..o.ass_optionstype..type..first_space..o.ass_optvalue..fix_chars(opt_value)
+            result = result..second_space..o.ass_optionsdefault..fix_chars(default)..third_space..o.ass_optionsspec..fix_chars(options_spec)
             table.insert(results, {
                 type = "option",
-                line = result.. return_spaces(result:len(), 140) .. o.ass_optionsspec..options_spec})
+                line = result
+            })
         end
     end
 end
@@ -492,7 +498,7 @@ function search_property(keyword, flags)
         if compare(property, keyword, flags) then
             table.insert(results, {
                 type = "property",
-                line = o.ass_properties .. property .. return_spaces(property:len(), 35) .. o.ass_propertycurrent .. fix_chars(mp.get_property(property, ""))})
+                line = o.ass_properties..fix_chars(property)..return_spaces(property:len(), 40)..o.ass_propertycurrent..fix_chars(mp.get_property(property, ""))})
         end
     end
 end
