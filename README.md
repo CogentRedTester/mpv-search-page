@@ -137,9 +137,10 @@ In addition there are a sizeable number of options to customise the ass tags tha
 
 Some ideas for future functionality:
 
-*   Add jumplists for properties and options
-*   Add multiple commands for each item using Ctrl,Alt, etc
 *   ~~Implement scrolling~~
-*   Implement a cursor to select items for commands (same as jumplist)
+*   Json options file to configure jumplist behaviour/commands
+    *   Add jumplists for properties and options
+    *   Add multiple commands for each item using Ctrl,Alt, etc
+    *   Implement a cursor to select items for commands (same as jumplist)
 *   Search multiple queries at once (may already be possible with lua patterns)
 
