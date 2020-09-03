@@ -121,7 +121,7 @@ The keybind and command pages have a jumplist implementation, while on the searc
 to select the entry at that location. On the keybinds page it runs the command without exitting the page,
 on the commands page it exits the page and loads the command up into console.lua.
 
-In addition, you can press enter to run the jump command on the first result in the list. This can be useful when scrolling.
+In addition, you can press enter to run the jump command on the currently selected result in the list when scrolling.
 
 ## Options
 

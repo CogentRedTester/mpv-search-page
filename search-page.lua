@@ -61,7 +61,7 @@ local o = {
     enable_jumplist = true,
 
     --there seems to be a significant performance hit from having lots of text off the screen
-    max_list = 28,
+    max_list = 26,
 
     --number of pixels to pan on each click
     --this refers to the horizontal panning
@@ -71,6 +71,8 @@ local o = {
     ass_header = "{\\c&H00ccff&\\fs40\\b500\\q2\\fnMonospace}",
     ass_underline = "{\\c&00ccff&\\fs30\\b100\\q2}",
     ass_footer = "{\\c&00ccff&\\b500\\fs20}",
+    ass_selector = "{\\c&H00ccff&}",
+    ass_allselectorspaces = "{\\fs20}",
 
     --colours for keybind page
     ass_allkeybindresults = "{\\fs20\\q2}",
@@ -113,7 +115,6 @@ local osd_display = mp.get_property_number('osd-duration')
 ov.hidden = true
 local search = {
     posX = 25,
-    start = 1,
     selected = 1,
     keyword = "",
     flags = ""
@@ -166,7 +167,6 @@ end
 --loads the results up onto the screen
 --is run for every scroll operation as well
 function load_results()
-    local start = search.start
     local keyword = search.keyword
     local flags = search.flags
 
@@ -185,20 +185,38 @@ function load_results()
 
     if o.enable_jumplist then
         mp.remove_key_binding("dynamic/run_current")
-        mp.add_forced_key_binding("ENTER", "dynamic/run_current", results[search.start].funct)
+        mp.add_forced_key_binding("ENTER", "dynamic/run_current", results[search.selected].funct)
     end
-    local header = results[start].type
+    local header = results[search.selected].type
     load_header(keyword, header, flags)
 
-    --prints the number of results above
-    if start > 1 then
-        ov.data = ov.data .. '\\N'..o.ass_footer..(start-1).." results above"
+    --this is an adaptation of the code I wrote for file-browser.lua
+    local start = 1
+    local finish = start+o.max_list
+    local mid = math.ceil(o.max_list/2)+1
+    if search.selected+mid > finish then
+        local offset = search.selected - finish + mid
+
+        --if we've overshot the end of the list then undo some of the offset
+        if finish + offset > #results then
+            offset = offset - ((finish+offset) - #results)
+        end
+
+        start = start + offset
+        finish = finish + offset
     end
+
+    if start < 1 then start = 1 end
+    local overflow = finish < #results
+    --this is necessary when the number of items in the dir is less than the max
+    if not overflow then finish = #results end
+
+    --prints the number of results above
+    if start > 1 then ov.data = ov.data .. '\\N'..o.ass_footer..(start-1).." results above" end
 
     local max = o.max_list
     --prints the results themselves
-    local i = start
-    while i < start+max  do
+    for i=start,finish  do
         local result = results[i]
         if result == nil then break end
 
@@ -207,20 +225,25 @@ function load_results()
             header = result.type
             max = max - 5
         end
-        ov.data = ov.data .. [[\N  ]] .. result.line
-        i = i + 1
+        ov.data = ov.data.."\\N"..o.ass_allselectorspaces
+
+        --note that the whitespace in the strings below is special unicode
+        if i == search.selected then ov.data = ov.data..o.ass_selector..[[▶ ‎ ‎]]
+        else ov.data = ov.data..[[ ‎ ‎ ‎ ‎]] end
+
+        ov.data = ov.data.. result.line
     end
 
     --prints the number of results left
-    if #results >= i then
-        ov.data = ov.data .. "\\N".. o.ass_footer.. #results - i + 1 .. " results remaining"
+    if overflow then
+        ov.data = ov.data .. "\\N".. o.ass_footer.. #results - finish .. " results remaining"
     end
 end
 
 function scroll_down()
-    search.start = search.start+1
-    if search.start > #results then
-        search.start = #results
+    search.selected = search.selected+1
+    if search.selected > #results then
+        search.selected = #results
         return
     end
     load_results()
@@ -228,9 +251,9 @@ function scroll_down()
 end
 
 function scroll_up()
-    search.start = search.start-1
-    if search.start < 1 then
-        search.start = 1
+    search.selected = search.selected-1
+    if search.selected < 1 then
+        search.selected = 1
         return
     end
     load_results()
@@ -537,7 +560,7 @@ mp.register_script_message('search_page/input', function(type, keyword, flags)
     remove_bindings()
     search.keyword = keyword
     search.flags = flagsstr
-    search.start = 1
+    search.selected = 1
     load_results()
     open_overlay()
 end)
