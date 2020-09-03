@@ -114,7 +114,7 @@ local results = {}
 local osd_display = mp.get_property_number('osd-duration')
 ov.hidden = true
 local search = {
-    posX = 25,
+    posX = 15,
     selected = 1,
     keyword = "",
     flags = ""
@@ -161,7 +161,7 @@ end
 --loads the header for the search page
 function load_header(keyword, name, flags)
     if name == nil then name = "" end
-    ov.data = ov.data .. "\\N" .. o.ass_header .. "Search results for " .. name .. ' "' .. fix_chars(keyword) .. '"'..flags.."\\N"..o.ass_underline.."---------------------------------------------------------"
+    ov.data = ov.data .. o.ass_header .. "Search results for " .. name .. ' "' .. fix_chars(keyword) .. '"'..flags.."\\N"..o.ass_underline.."---------------------------------------------------------".."\\N"
 end
 
 --loads the results up onto the screen
@@ -170,7 +170,7 @@ function load_results()
     local keyword = search.keyword
     local flags = search.flags
 
-    ov.data = "{\\pos("..search.posX..",0)\\an7}"
+    ov.data = "{\\pos("..search.posX..",10)\\an7}"
     if not flags then
         flags = ""
     else
@@ -179,7 +179,7 @@ function load_results()
 
     --if there are no results then a header will never be printed. We don't want that, so here we are
     if #results == 0 then
-        ov.data = ov.data .. "\\N" .. o.ass_header .. "No results for '" .. keyword .. "'"..flags.."\\N"..o.ass_underline.."---------------------------------------------------------"
+        ov.data = ov.data .. o.ass_header .. "No results for '" .. keyword .. "'"..flags.."\\N"..o.ass_underline.."---------------------------------------------------------"
         return
     end
 
@@ -187,8 +187,6 @@ function load_results()
         mp.remove_key_binding("dynamic/run_current")
         mp.add_forced_key_binding("ENTER", "dynamic/run_current", results[search.selected].funct)
     end
-    local header = results[search.selected].type
-    load_header(keyword, header, flags)
 
     --this is an adaptation of the code I wrote for file-browser.lua
     local start = 1
@@ -211,8 +209,10 @@ function load_results()
     --this is necessary when the number of items in the dir is less than the max
     if not overflow then finish = #results end
 
+    local header = results[start].type
+    load_header(keyword, header, flags)
     --prints the number of results above
-    if start > 1 then ov.data = ov.data .. '\\N'..o.ass_footer..(start-1).." results above" end
+    if start > 1 then ov.data = ov.data .. o.ass_footer..(start-1).." results above\\N" end
 
     local max = o.max_list
     --prints the results themselves
@@ -223,20 +223,19 @@ function load_results()
         if result.type ~= header then
             load_header(keyword, result.type, flags)
             header = result.type
-            max = max - 5
         end
-        ov.data = ov.data.."\\N"..o.ass_allselectorspaces
+        ov.data = ov.data..o.ass_allselectorspaces
 
         --note that the whitespace in the strings below is special unicode
         if i == search.selected then ov.data = ov.data..o.ass_selector..[[▶ ‎ ‎]]
         else ov.data = ov.data..[[ ‎ ‎ ‎ ‎]] end
 
-        ov.data = ov.data.. result.line
+        ov.data = ov.data.. result.line.."\\N"
     end
 
     --prints the number of results left
     if overflow then
-        ov.data = ov.data .. "\\N".. o.ass_footer.. #results - finish .. " results remaining"
+        ov.data = ov.data .. o.ass_footer.. #results - finish .. " results remaining".."\\N"
     end
 end
 
@@ -268,8 +267,8 @@ end
 
 function pan_left()
     search.posX = search.posX + o.pan_speed
-    if search.posX > 25 then
-        search.posX = 25
+    if search.posX > 15 then
+        search.posX = 15
         return
     end
     load_results()
