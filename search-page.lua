@@ -114,29 +114,30 @@ ov.hidden = true
 local search = {
     posX = 25,
     start = 1,
+    selected = 1,
     keyword = "",
     flags = ""
 }
 
 dynamic_keybindings = {
-    "search_page_key/down_page",
-    "search_page_key/up_page",
-    "search_page_key/close_overlay",
-    "search_page_key/run_current",
-    "search_page_key/pan_left",
-    "search_page_key/pan_right"
+    {"DOWN", "down_page", function() scroll_down() end, {repeatable = true}},
+    {"UP", "up_page", function() scroll_up() end, {repeatable = true}},
+    {"ESC", "close_overlay", function() close_overlay() end, {}},
+    {"ENTER", "run_current", function() results[search.selected].funct() end, {}},
+    {"LEFT", "pan_left", function() pan_left() end, {repeatable = true}},
+    {"RIGHT", "pan_right", function() pan_right() end, {repeatable = true}}
 }
 
 local jumplist_keys = {
-    "search_page_key/1",
-    "search_page_key/2",
-    "search_page_key/3",
-    "search_page_key/4",
-    "search_page_key/5",
-    "search_page_key/6",
-    "search_page_key/7",
-    "search_page_key/8",
-    "search_page_key/9"
+    "jumplist/1",
+    "jumplist/2",
+    "jumplist/3",
+    "jumplist/4",
+    "jumplist/5",
+    "jumplist/6",
+    "jumplist/7",
+    "jumplist/8",
+    "jumplist/9"
 }
 
 --removes keybinds
@@ -145,7 +146,7 @@ function remove_bindings()
         mp.remove_key_binding(key)
     end
     for _,key in ipairs(dynamic_keybindings) do
-        mp.remove_key_binding(key)
+        mp.remove_key_binding('dynamic/'..key[2])
     end
 end
 
@@ -183,8 +184,8 @@ function load_results()
     end
 
     if o.enable_jumplist then
-        mp.remove_key_binding("search_page_key/run_current")
-        mp.add_forced_key_binding("ENTER", "search_page_key/run_current", results[search.start].funct)
+        mp.remove_key_binding("dynamic/run_current")
+        mp.add_forced_key_binding("ENTER", "dynamic/run_current", results[search.start].funct)
     end
     local header = results[start].type
     load_header(keyword, header, flags)
@@ -206,7 +207,7 @@ function load_results()
             header = result.type
             max = max - 5
         end
-        ov.data = ov.data .. '\\N' .. result.line
+        ov.data = ov.data .. [[\N  ]] .. result.line
         i = i + 1
     end
 
@@ -216,6 +217,42 @@ function load_results()
     end
 end
 
+function scroll_down()
+    search.start = search.start+1
+    if search.start > #results then
+        search.start = #results
+        return
+    end
+    load_results()
+    ov:update()
+end
+
+function scroll_up()
+    search.start = search.start-1
+    if search.start < 1 then
+        search.start = 1
+        return
+    end
+    load_results()
+    ov:update()
+end
+
+function pan_right()
+    search.posX = search.posX - o.pan_speed
+    load_results()
+    ov:update()
+end
+
+function pan_left()
+    search.posX = search.posX + o.pan_speed
+    if search.posX > 25 then
+        search.posX = 25
+        return
+    end
+    load_results()
+    ov:update()
+end
+
 --enables the overlay
 --and sets keybinds
 function open_overlay()
@@ -223,49 +260,9 @@ function open_overlay()
     ov:update()
 
     --assigns the keybinds
-
-    --scroll down
-    mp.add_forced_key_binding("DOWN", "search_page_key/down_page", function()
-        search.start = search.start+1
-        if search.start > #results then
-            search.start = #results
-            return
-        end
-        load_results()
-        ov:update()
-    end, {repeatable = true})
-
-    --scroll up
-    mp.add_forced_key_binding("UP", "search_page_key/up_page", function()
-        search.start = search.start-1
-        if search.start < 1 then
-            search.start = 1
-            return
-        end
-        load_results()
-        ov:update()
-    end, {repeatable = true})
-
-    --pan right
-    mp.add_forced_key_binding("RIGHT", "search_page_key/pan_right", function()
-        search.posX = search.posX - o.pan_speed
-        load_results()
-        ov:update()
-    end, {repeatable = true})
-
-    --pan left
-    mp.add_forced_key_binding("LEFT", "search_page_key/pan_left", function()
-        search.posX = search.posX + o.pan_speed
-        if search.posX > 25 then
-            search.posX = 25
-            return
-        end
-        load_results()
-        ov:update()
-    end, {repeatable = true})
-
-    --close search page
-    mp.add_forced_key_binding("ESC", "search_page_key/close_overlay", close_overlay)
+    for _,v in ipairs(dynamic_keybindings) do
+        mp.add_forced_key_binding(v[1], 'dynamic/'..v[2], v[3], v[4])
+    end
 
     --sets the jumplist commands
     if not o.enable_jumplist then return end
