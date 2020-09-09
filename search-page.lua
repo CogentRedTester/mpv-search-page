@@ -129,22 +129,10 @@ dynamic_keybindings = {
     {"RIGHT", "pan_right", function() pan_right() end, {repeatable = true}}
 }
 
-local jumplist_keys = {
-    "jumplist/1",
-    "jumplist/2",
-    "jumplist/3",
-    "jumplist/4",
-    "jumplist/5",
-    "jumplist/6",
-    "jumplist/7",
-    "jumplist/8",
-    "jumplist/9"
-}
-
 --removes keybinds
 function remove_bindings()
-    for _,key in ipairs(jumplist_keys) do
-        mp.remove_key_binding(key)
+    for i=1,9 do
+        mp.remove_key_binding("jumplist/"..i)
     end
     for _,key in ipairs(dynamic_keybindings) do
         mp.remove_key_binding('dynamic/'..key[2])
@@ -288,9 +276,10 @@ function open_overlay()
 
     --sets the jumplist commands
     if not o.enable_jumplist then return end
-    for i,result in ipairs(results) do
-        if i < 10 and result.funct then
-            mp.add_forced_key_binding(tostring(i), jumplist_keys[i], result.funct)
+    for i=1,9 do
+        if results[i] == nil then break end
+        if results[i].funct then
+            mp.add_forced_key_binding(tostring(i), 'jumplist/'..i, results[i].funct)
         end
     end
 end
