@@ -112,7 +112,6 @@ local ov = mp.create_osd_overlay("ass-events")
 local results = {}
 
 local osd_display = mp.get_property_number('osd-duration')
-ov.hidden = true
 local search = {
     posX = 15,
     selected = 1,
@@ -141,8 +140,7 @@ end
 
 --closes the overlay and removes bindings
 function close_overlay()
-    ov.hidden = true
-    ov:update()
+    ov:remove()
     remove_bindings()
 end
 
@@ -266,7 +264,6 @@ end
 --enables the overlay
 --and sets keybinds
 function open_overlay()
-    ov.hidden = false
     ov:update()
 
     --assigns the keybinds
@@ -390,12 +387,10 @@ function search_keys(keyword, flags)
                 key = keybind.key,
                 cmd = keybind.cmd,
                 funct = function()
-                    ov.hidden = true
-                    ov:update()
+                    ov:remove()
                     mp.command(keybind.cmd)
 
                     mp.add_timeout(osd_display/1000, function()
-                        ov.hidden = false
                         ov:update()
                     end)
                 end
