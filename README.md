@@ -3,7 +3,7 @@
 ![image](screenshots/standard_query.png)
 
 This script allows you to search for keybinds, properties, options and commands and have matching entries display on the OSD.
-The search is case insensitive by default, and the script sends the filter directly to a lua string match function, so you can use patterns to get more complex filtering. For options and limitations see the Queries and Flags sections.
+The search is case insensitive by default, and the script sends the filter directly to a lua string match function, so you can use patterns to get more complex filtering. For options and limitations see the [Queries](#queries) and [Flags](#flags) sections.
 
 ## Pages
 The search page will remain open until the esc key is pressed. When the search page is open the up and down arrow can be used to scroll through the results, and the left and right arrows can be used to pan horizontally to see any cut off values.
@@ -28,7 +28,7 @@ The command page displays input commands that can be used in input.conf or the c
 
 The search page shows all of the command names in lavendar on the left. The following words are arguments that the command takes, green arguments are compulsory, while cyan are optional. Each argument contains its type in small yellow brackets. Note that the type, and colour-coding is taken straight from the lua API, so it may not always be correct.
 
-Pressing keys 1-9 will load the command for that respective entry into console.lua, and print the arguments and thier types to the console for reference. Compulsory arguments will have an exclamation mark before them.
+Pressing keys 1-9 will load the command for that respective entry into console.lua, and print the arguments and their types to the console for reference. Compulsory arguments will have an exclamation mark before them.
 
 ### Properties
 ![property_page](screenshots/property_page.png)
