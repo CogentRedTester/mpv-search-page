@@ -97,7 +97,7 @@ Sending a query message without any arguments (or with only the type argument) w
 
 ## Lua Patterns
 
-This script sends queries directly into the Lua string find function, with the only modification being that the query is converted into lowercase. The find function supports something called [patterns](http://lua-users.org/wiki/PatternsTutorial) to identify any matching substrings. In order to facilitate this there are a number of symbols, such as `? % . ^ [ ]`, which are reserved for pattern creation. If you try to search with any of these symbols you may get some unexpected results; however, you can escape these characters using a `%` sign. If you wish to use patterns to run extremely precise searches, then you may want to look at the flags section for how to make the queries more pattern friendly.
+This script sends queries directly into the Lua string find function, with the only modification being that the query is converted into lowercase. The find function supports something called [patterns](http://lua-users.org/wiki/PatternsTutorial) to identify any matching substrings. In order to facilitate this there are a number of symbols, such as `? % . ^ [ ]`, which are reserved for pattern creation. If you try to search with any of these symbols you may get some unexpected results; however, you can escape these characters using a `%` sign. If you wish to use patterns to run extremely precise searches, then you may want to look at the [flags](#flags) section for how to make the queries more pattern friendly.
 
 ## Flags
 
@@ -128,10 +128,12 @@ In addition, you can press enter to run the jump command on the currently select
 Search page will read several options from script-opts when the player is lanched, the current options, and their defaults are:
 
     enable_jumplist = yes   #disables the jumplist keybinds
-    max_list = 30           #number of search results to show
+    max_list = 26           #number of search results to show
     pan_speed = 100         #horizontal pixels to pan on each keypress
 
-In addition there are a sizeable number of options to customise the ass tags that the page uses. This theoretically allows you to customise the page in almost any way you like. There are far too many to show here, the full list is near the top of the script.
+In addition there are a sizeable number of options to customise the ass tags that the page uses. This theoretically allows you to customise the page in almost any way you like. There are far too many to show here.
+
+The full list of options, and their defaults are shown in [search_page.conf](search_page.conf).
 
 ## Future Plans
 
