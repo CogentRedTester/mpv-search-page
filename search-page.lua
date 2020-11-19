@@ -135,18 +135,18 @@ end
 
 --loads the results up onto the screen
 --is run for every scroll operation as well
-function load_results()
+local function load_results()
     list.global_style = "{\\pos("..search.posX..",10)\\an7}"
     list:update()
     return
 end
 
-function pan_right()
+local function pan_right()
     search.posX = search.posX - o.pan_speed
     load_results()
 end
 
-function pan_left()
+local function pan_left()
     search.posX = search.posX + o.pan_speed
     if search.posX > 15 then
         search.posX = 15
@@ -156,7 +156,7 @@ function pan_left()
 end
 
 --handles the search queries
-function compare(str, keyword, flags)
+local function compare(str, keyword, flags)
     if not flags then
         return str:lower():find(keyword:lower())
     end
@@ -184,14 +184,14 @@ function compare(str, keyword, flags)
     end
 end
 
-function return_spaces(string_len, width)
+local function return_spaces(string_len, width)
     local num_spaces = width - string_len
     if num_spaces < 2 then num_spaces = 2 end
     return string.rep(" ", num_spaces)
 end
 
 --search keybinds
-function search_keys(keyword, flags)
+local function search_keys(keyword, flags)
     local keys = mp.get_property_native('input-bindings')
     local keybound = {}
 
@@ -269,8 +269,8 @@ function search_keys(keyword, flags)
 end
 
 --search commands
-function search_commands(keyword, flags)
-    commands = mp.get_property_native('command-list')
+local function search_commands(keyword, flags)
+    local commands = mp.get_property_native('command-list')
 
     for _,command in ipairs(commands) do
         if
@@ -307,7 +307,7 @@ function search_commands(keyword, flags)
     end
 end
 
-function search_options(keyword, flags)
+local function search_options(keyword, flags)
     local options = mp.get_property_native('options')
 
     for _,option in ipairs(options) do
@@ -354,7 +354,7 @@ function search_options(keyword, flags)
     end
 end
 
-function search_property(keyword, flags)
+local function search_property(keyword, flags)
     local properties = mp.get_property_native('property-list', {})
 
     for _,property in ipairs(properties) do
