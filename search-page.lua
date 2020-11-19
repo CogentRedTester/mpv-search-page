@@ -9,12 +9,8 @@
     The command page searches just the command name, but also shows information about arguments.
     The properties page will search just the property name, but will also show contents of the property
     The options page will search the name and option choices, it shows default values, choices, and ranges
-    
-    The search page will remain open until told to close. This key is esc.
 
-    The keybind and command pages have a jumplist implementation, while on the search page you can press the number keys, 1-9,
-    to select the entry at that location. On the keybinds page it runs the command without exitting the page,
-    on the commands page it exits the page and loads the command up into console.lua.
+    The search page will remain open until told to close. This key is esc.
 
     The default commands are:
         f12 script-binding search-keybinds
@@ -25,7 +21,7 @@
 
     Once the command is sent the console will open with a pre-entered search command, simply add a query string as the first argument.
     Using the above keybinds will pre-enter the raw query command into the console, but you can modify it to search multiple criteria at once.
-    
+
     The raw command is:
         script-message search_page/input [query types] [query string] {flags}
 
@@ -43,7 +39,7 @@
         wrap        search for a whole word only
         pattern     don't convert the query to lowercase, required for some Lua patterns
         exact       don't convert anything to lowercase
-    
+
     These flags can be combined, so for example a query `t wrap` would normally result in both lower and upper case t binds, however,
     `t wrap+exact` will return only lowercase t. The pattern flag is only useful when doing some funky pattern stuff, for example:
     `f%A wrap+pattern` will return all complete words containing f followed by a non-letter. Often exact will work just fine for this,
@@ -61,7 +57,7 @@ local o = {
     enable_jumplist = true,
 
     --there seems to be a significant performance hit from having lots of text off the screen
-    max_list = 26,
+    max_list = 22,
 
     --number of pixels to pan on each click
     --this refers to the horizontal panning
@@ -102,153 +98,52 @@ local o = {
 
 opt.read_options(o, "search_page")
 
-local ov = mp.create_osd_overlay("ass-events")
+package.path = (mp.get_opt("scroll_list-directory") or mp.command_native({'expand-path', '~~/scripts'})) .. '/?.lua;' .. package.path
+local list = require 'scroll-list'
+
+list.header_style = o.ass_header
+list.wrapper_style = o.ass_footer
+list.indent = [[\h\h\h]]
+list.num_entries = o.max_list
 
 --an array of objects for each entry
 --each object contains:
 --  line = the ass formatted string
 --  type = the type of entry
 --  funct = the function to run on keypress
-local results = {}
 
 local osd_display = mp.get_property_number('osd-duration')
 local search = {
     posX = 15,
-    selected = 1,
     keyword = "",
     flags = ""
 }
 
-dynamic_keybindings = {
-    {"DOWN", "down_page", function() scroll_down() end, {repeatable = true}},
-    {"UP", "up_page", function() scroll_up() end, {repeatable = true}},
-    {"ESC", "close_overlay", function() close_overlay() end, {}},
-    {"ENTER", "run_current", function() results[search.selected].funct() end, {}},
-    {"LEFT", "pan_left", function() pan_left() end, {repeatable = true}},
-    {"RIGHT", "pan_right", function() pan_right() end, {repeatable = true}}
-}
-
---removes keybinds
-function remove_bindings()
-    for i=1,9 do
-        mp.remove_key_binding("jumplist/"..i)
-    end
-    for _,key in ipairs(dynamic_keybindings) do
-        mp.remove_key_binding('dynamic/'..key[2])
-    end
-end
-
---closes the overlay and removes bindings
-function close_overlay()
-    ov:remove()
-    remove_bindings()
-end
-
---loads the header for the search page
-function load_header(keyword, name, flags)
-    if name == nil then name = "" end
-    ov.data = ov.data .. o.ass_header .. "Search results for " .. name .. ' "' .. fix_chars(keyword) .. '"'..flags.."\\N"..o.ass_underline.."---------------------------------------------------------".."\\N"
-end
-
---loads the results up onto the screen
---is run for every scroll operation as well
-function load_results()
-    local keyword = search.keyword
+--loads the header
+list.format_header = function(this)
     local flags = search.flags
-
-    ov.data = "{\\pos("..search.posX..",10)\\an7}"
     if not flags then
         flags = ""
     else
         flags = " ("..flags..")"
     end
-
-    --if there are no results then a header will never be printed. We don't want that, so here we are
-    if #results == 0 then
-        ov.data = ov.data .. o.ass_header .. "No results for '" .. keyword .. "'"..flags.."\\N"..o.ass_underline.."---------------------------------------------------------"
-        return
-    end
-
-    if o.enable_jumplist then
-        mp.remove_key_binding("dynamic/run_current")
-        mp.add_forced_key_binding("ENTER", "dynamic/run_current", results[search.selected].funct)
-    end
-
-    --this is an adaptation of the code I wrote for file-browser.lua
-    local start = 1
-    local finish = start+o.max_list
-    local mid = math.ceil(o.max_list/2)+1
-    if search.selected+mid > finish then
-        local offset = search.selected - finish + mid
-
-        --if we've overshot the end of the list then undo some of the offset
-        if finish + offset > #results then
-            offset = offset - ((finish+offset) - #results)
-        end
-
-        start = start + offset
-        finish = finish + offset
-    end
-
-    if start < 1 then start = 1 end
-    local overflow = finish < #results
-    --this is necessary when the number of items in the dir is less than the max
-    if not overflow then finish = #results end
-
-    local header = results[start].type
-    load_header(keyword, header, flags)
-    --prints the number of results above
-    if start > 1 then ov.data = ov.data .. o.ass_footer..(start-1).." results above\\N" end
-
-    local max = o.max_list
-    --prints the results themselves
-    for i=start,finish  do
-        local result = results[i]
-        if result == nil then break end
-
-        if result.type ~= header then
-            load_header(keyword, result.type, flags)
-            header = result.type
-        end
-        ov.data = ov.data..o.ass_allselectorspaces
-
-        --note that the whitespace in the strings below is special unicode
-        if i == search.selected then ov.data = ov.data..o.ass_selector..[[▶ ‎ ‎]]
-        else ov.data = ov.data..[[ ‎ ‎ ‎ ‎]] end
-
-        ov.data = ov.data.. result.line.."\\N"
-    end
-
-    --prints the number of results left
-    if overflow then
-        ov.data = ov.data .. o.ass_footer.. #results - finish .. " results remaining".."\\N"
-    end
+    this:append(o.ass_header.."Search results for "..search.type ..' "'..list.ass_escape(search.keyword)..'"'..flags)
+    this:newline()
+    this:append(o.ass_underline.."---------------------------------------------------------")
+    this:newline()
 end
 
-function scroll_down()
-    search.selected = search.selected+1
-    if search.selected > #results then
-        search.selected = #results
-        return
-    end
-    load_results()
-    ov:update()
-end
-
-function scroll_up()
-    search.selected = search.selected-1
-    if search.selected < 1 then
-        search.selected = 1
-        return
-    end
-    load_results()
-    ov:update()
+--loads the results up onto the screen
+--is run for every scroll operation as well
+function load_results()
+    list.global_style = "{\\pos("..search.posX..",10)\\an7}"
+    list:update()
+    return
 end
 
 function pan_right()
     search.posX = search.posX - o.pan_speed
     load_results()
-    ov:update()
 end
 
 function pan_left()
@@ -258,41 +153,6 @@ function pan_left()
         return
     end
     load_results()
-    ov:update()
-end
-
---enables the overlay
---and sets keybinds
-function open_overlay()
-    ov:update()
-
-    --assigns the keybinds
-    for _,v in ipairs(dynamic_keybindings) do
-        mp.add_forced_key_binding(v[1], 'dynamic/'..v[2], v[3], v[4])
-    end
-
-    --sets the jumplist commands
-    if not o.enable_jumplist then return end
-    for i=1,9 do
-        if results[i] == nil then break end
-        if results[i].funct then
-            mp.add_forced_key_binding(tostring(i), 'jumplist/'..i, results[i].funct)
-        end
-    end
-end
-
---replaces any characters that ass can't display normally
---currently this is just curly brackets
-function fix_chars(str)
-    str = tostring(str)
-
-    --some escapes I took from console.lua
-    str = str:gsub('\\', '\\\239\187\191')
-    str = str:gsub('\n', '  ')
-
-    str = str:gsub('{', "\\{")
-    str = str:gsub('}', "\\}")
-    return str
 end
 
 --handles the search queries
@@ -375,23 +235,23 @@ function search_keys(keyword, flags)
                 comment = return_spaces(key:len()+section:len()+cmd:len(),60) .. "#" .. keybind.comment
             end
 
-            key = fix_chars(key)
-            section = fix_chars(section)
-            cmd = fix_chars(cmd)
-            comment = fix_chars(comment)
+            key = list.ass_escape(key)
+            section = list.ass_escape(section)
+            cmd = list.ass_escape(cmd)
+            comment = list.ass_escape(comment)
 
             --appends the result to the list
-            table.insert(results, {
+            table.insert(list.list, {
                 type = "key",
-                line = o.ass_allkeybindresults .. o.ass_key .. key .. o.ass_section .. section .. o.ass_cmdkey .. cmd .. o.ass_comment .. comment,
+                ass = o.ass_allkeybindresults .. o.ass_key .. key .. o.ass_section .. section .. o.ass_cmdkey .. cmd .. o.ass_comment .. comment,
                 key = keybind.key,
                 cmd = keybind.cmd,
                 funct = function()
-                    ov:remove()
+                    list:close()
                     mp.command(keybind.cmd)
 
                     mp.add_timeout(osd_display/1000, function()
-                        ov:update()
+                        list:open()
                     end)
                 end
             })
@@ -399,9 +259,9 @@ function search_keys(keyword, flags)
     end
 
     --does a second pass of the results and greys out any overwritten keys
-    for _,v in ipairs(results) do
+    for _,v in ipairs(list.list) do
         if keybound[v.key] and keybound[v.key].cmd ~= v.cmd then
-            v.line = "{\\alpha&H80&}"..v.line.."{\\alpha&H00&}"
+            v.ass = "{\\alpha&H80&}"..v.ass.."{\\alpha&H00&}"
         end
         v.key = nil
         v.cmd = nil
@@ -433,12 +293,12 @@ function search_commands(keyword, flags)
                 arg_string = arg_string .. " " .. arg.name .. o.ass_argtype.." ("..arg.type..") "
             end
 
-            table.insert(results, {
+            table.insert(list.list, {
                 type = "command",
-                line = o.ass_cmd..fix_chars(cmd)..return_spaces(cmd:len(), 20)..arg_string,
+                ass = o.ass_cmd..list.ass_escape(cmd)..return_spaces(cmd:len(), 20)..arg_string,
                 funct = function()
                     mp.commandv('script-message-to', 'console', 'type', command.name .. " ")
-                    close_overlay()
+                    list:close()
                     msg.info("")
                     msg.info(result_no_ass)
                 end
@@ -484,11 +344,11 @@ function search_options(keyword, flags)
                 options_spec = "    [ "..mp.get_property_number('option-info/'..option..'/min', "").."  -  ".. mp.get_property_number("option-info/"..option..'/max', "").." ]"
             end
 
-            local result = o.ass_options..fix_chars(option).."  "..o.ass_optionstype..type..first_space..o.ass_optvalue..fix_chars(opt_value)
-            result = result..second_space..o.ass_optionsdefault..fix_chars(default)..third_space..o.ass_optionsspec..fix_chars(options_spec)
-            table.insert(results, {
+            local result = o.ass_options..list.ass_escape(option).."  "..o.ass_optionstype..type..first_space..o.ass_optvalue..list.ass_escape(opt_value)
+            result = result..second_space..o.ass_optionsdefault..list.ass_escape(default)..third_space..o.ass_optionsspec..list.ass_escape(options_spec)
+            table.insert(list.list, {
                 type = "option",
-                line = result
+                ass = result
             })
         end
     end
@@ -499,9 +359,9 @@ function search_property(keyword, flags)
 
     for _,property in ipairs(properties) do
         if compare(property, keyword, flags) then
-            table.insert(results, {
+            table.insert(list.list, {
                 type = "property",
-                line = o.ass_properties..fix_chars(property)..return_spaces(property:len(), 40)..o.ass_propertycurrent..fix_chars(mp.get_property(property, ""))})
+                ass = o.ass_properties..list.ass_escape(property)..return_spaces(property:len(), 40)..o.ass_propertycurrent..list.ass_escape(mp.get_property(property, ""))})
         end
     end
 end
@@ -509,10 +369,10 @@ end
 --recieves the input messages
 mp.register_script_message('search_page/input', function(type, keyword, flags)
     if keyword == nil then
-        if ov.data ~= "" then
+        if list.data ~= "" then
             mp.command("script-binding console/_console_1")
-            remove_bindings()
-            open_overlay()
+            -- remove_bindings()
+            list:open()
         end
         return
     end
@@ -525,28 +385,48 @@ mp.register_script_message('search_page/input', function(type, keyword, flags)
         end
     end
 
-    results = {}
-    if type:find("key%$") or type == "all$" then
+    list.list = {}
+    search.type = nil
+    if type == "key$" then
+        search.type = "key"
         search_keys(keyword, flags)
     end
-    if type:find("cmd%$") or type == "all$" then
+    if type == "cmd$" then
+        search.type = "command"
         search_commands(keyword, flags)
     end
-    if type:find("prop%$") or type == "all$" then
+    if type == "prop$" then
+        search.type = "property"
         search_property(keyword, flags)
     end
-    if type:find("opt%$") or type == "all$" then
+    if type == "opt%" then
+        search.type = "option"
         search_options(keyword, flags)
     end
 
+    if not search.type then
+        msg.error("invalid search type")
+        return
+    end
+
     mp.command("script-binding console/_console_1")
-    remove_bindings()
+    -- remove_bindings()
     search.keyword = keyword
     search.flags = flagsstr
-    search.selected = 1
+    list.selected = 1
     load_results()
-    open_overlay()
+    list:open()
 end)
+
+list.keybinds = {
+    {"DOWN", "down_page", function() list:scroll_down() end, {repeatable = true}},
+    {"UP", "up_page", function() list:scroll_up() end, {repeatable = true}},
+    {"ESC", "close_overlay", function() list:close() end, {}},
+    {"ENTER", "run_current", function() list.list[list.selected].funct() end, {}},
+    {"LEFT", "pan_left", function() pan_left() end, {repeatable = true}},
+    {"RIGHT", "pan_right", function() pan_right() end, {repeatable = true}}
+}
+
 
 mp.add_key_binding('f12','search-keybinds', function()
     mp.commandv('script-message-to', 'console', 'type', 'script-message search_page/input key$ ')
