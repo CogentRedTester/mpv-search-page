@@ -17,8 +17,6 @@ The keybind page is for searching keybindings. By default the script searches th
 
 The search page shows the key name in lavendar on the left, then the command in cyan, and finally the comment in green, preceeded by a `#`. In addition, if the keybinding is part of a section other than the default, the section will be printed in yellow brackets between the key name and the command.
 
-Pressing keys 1-9 will send the command for that respective entry.
-
 Keybinds which are disabled or overridden will be shown at 50% opacity.
 
 ### Commands
@@ -27,8 +25,6 @@ Keybinds which are disabled or overridden will be shown at 50% opacity.
 The command page displays input commands that can be used in input.conf or the console, as well as their arguments. The script only searches the name of the commands.
 
 The search page shows all of the command names in lavendar on the left. The following words are arguments that the command takes, green arguments are compulsory, while cyan are optional. Each argument contains its type in small yellow brackets. Note that the type, and colour-coding is taken straight from the lua API, so it may not always be correct.
-
-Pressing keys 1-9 will load the command for that respective entry into console.lua, and print the arguments and their types to the console for reference. Compulsory arguments will have an exclamation mark before them.
 
 ### Properties
 ![property_page](screenshots/property_page.png)
@@ -61,10 +57,6 @@ In addition the following keybinds are dynamically created when the search page 
     up              scrolls the page up
     left            pans the whole search page left
     right           pans the whole search page right
-    enter           see jumplist
-    1-9             see jumplist
-
-The jumplist keys are only bound if the corresposnding result actually exists.
 
 
 ## Queries
@@ -114,14 +106,6 @@ but in this example we might still want to find upper-case keys, like function k
 Here is an example of a query to list all function keybinds:
 
     script-message search_page/input key$ f%d%d? wrap
-
-## Jumplist
-
-The keybind and command pages have a jumplist implementation, while on the search page you can press the number keys, 1-9,
-to select the entry at that location. On the keybinds page it runs the command without exitting the page,
-on the commands page it exits the page and loads the command up into console.lua.
-
-In addition, you can press enter to run the jump command on the currently selected result in the list when scrolling.
 
 ## Options
 

@@ -53,9 +53,6 @@ local msg = require 'mp.msg'
 local opt = require 'mp.options'
 
 local o = {
-    --enables the 1-9 jumplist for the search pages
-    enable_jumplist = true,
-
     --there seems to be a significant performance hit from having lots of text off the screen
     max_list = 22,
 
@@ -158,7 +155,6 @@ local function create_page(type, t)
         {"DOWN", "down_page", function() temp:scroll_down() end, {repeatable = true}},
         {"UP", "up_page", function() temp:scroll_up() end, {repeatable = true}},
         {"ESC", "close_overlay", function() temp:close() end, {}},
-        {"ENTER", "run_current", function() temp[temp.selected].funct() end, {}},
         {"LEFT", "pan_left", function() temp:pan_left() end, {repeatable = true}},
         {"RIGHT", "pan_right", function() temp:pan_right() end, {repeatable = true}},
         {"Shift+LEFT", "page_left", function() temp:page_left() end, {}},
@@ -309,15 +305,7 @@ function KEYBINDS:search(keyword, flags)
                 type = "key",
                 ass = o.ass_allkeybindresults .. o.ass_key .. key .. o.ass_section .. section .. o.ass_cmdkey .. cmd .. o.ass_comment .. comment,
                 key = keybind.key,
-                cmd = keybind.cmd,
-                funct = function()
-                    self:close()
-                    mp.command(keybind.cmd)
-
-                    mp.add_timeout(osd_display/1000, function()
-                        self:open()
-                    end)
-                end
+                cmd = keybind.cmd
             })
         end
     end
@@ -359,13 +347,7 @@ function COMMANDS:search(keyword, flags)
 
             table.insert(self.list, {
                 type = "command",
-                ass = o.ass_cmd..self.ass_escape(cmd)..return_spaces(cmd:len(), 20)..arg_string,
-                funct = function()
-                    mp.commandv('script-message-to', 'console', 'type', command.name .. " ")
-                    self:close()
-                    msg.info("")
-                    msg.info(result_no_ass)
-                end
+                ass = o.ass_cmd..self.ass_escape(cmd)..return_spaces(cmd:len(), 20)..arg_string
             })
         end
     end
@@ -412,11 +394,7 @@ function OPTIONS:search(keyword, flags)
             result = result..second_space..o.ass_optionsdefault..self.ass_escape(default)..third_space..o.ass_optionsspec..self.ass_escape(options_spec)
             table.insert(self.list, {
                 type = "option",
-                ass = result,
-                funct = function()
-                    mp.commandv('script-message-to', 'console', 'type', 'set '.. option .. " ")
-                    self:close()
-                end
+                ass = result
             })
         end
     end
@@ -429,11 +407,7 @@ function PROPERTIES:search(keyword, flags)
         if compare(property, keyword, flags) then
             table.insert(self.list, {
                 type = "property",
-                ass = o.ass_properties..self.ass_escape(property)..return_spaces(property:len(), 40)..o.ass_propertycurrent..self.ass_escape(mp.get_property(property, "")),
-                funct = function()
-                    mp.commandv('script-message-to', 'console', 'type', 'print-text ${'.. property .. "} ")
-                    self:close()
-                end
+                ass = o.ass_properties..self.ass_escape(property)..return_spaces(property:len(), 40)..o.ass_propertycurrent..self.ass_escape(mp.get_property(property, ""))
             })
         end
     end
