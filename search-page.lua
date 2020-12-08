@@ -99,60 +99,115 @@ local o = {
 opt.read_options(o, "search_page")
 
 package.path = (mp.get_opt("scroll_list-directory") or mp.command_native({'expand-path', '~~/scripts'})) .. '/?.lua;' .. package.path
-local list = require 'scroll-list'
-
-list.header_style = o.ass_header
-list.wrapper_style = o.ass_footer
-list.indent = [[\h\h\h]]
-list.num_entries = o.max_list
-
---an array of objects for each entry
---each object contains:
---  line = the ass formatted string
---  type = the type of entry
---  funct = the function to run on keypress
+local _list = require 'scroll-list'
+local list_meta = getmetatable( _list ).__index
 
 local osd_display = mp.get_property_number('osd-duration')
-local search = {
-    posX = 15,
+
+list_meta.header_style = o.ass_header
+list_meta.wrapper_style = o.ass_footer
+list_meta.indent = [[\h\h\h]]
+list_meta.num_entries = o.max_list
+list_meta.empty_text = "no results"
+
+list_meta.current_page = nil
+list_meta.latest_search = {
     keyword = "",
     flags = ""
 }
 
 --loads the header
-list.format_header = function(this)
-    local flags = search.flags
+function list_meta:format_header()
+    self:append("{\\pos("..self.posX..",10)\\an7}")
+    local flags = self.flags
     if not flags then
         flags = ""
     else
         flags = " ("..flags..")"
     end
-    this:append(o.ass_header.."Search results for "..search.type ..' "'..list.ass_escape(search.keyword)..'"'..flags)
-    this:newline()
-    this:append(o.ass_underline.."---------------------------------------------------------")
-    this:newline()
+    self:append(o.ass_header.."Search results for "..self.type ..' "'..self.ass_escape(self.keyword)..'"'..flags)
+    self:newline()
+    self:append(o.ass_underline.."---------------------------------------------------------")
+    self:newline()
 end
 
---loads the results up onto the screen
---is run for every scroll operation as well
-local function load_results()
-    list.global_style = "{\\pos("..search.posX..",10)\\an7}"
-    list:update()
-    return
+function list_meta:pan_right()
+    self.posX = self.posX - o.pan_speed
+    self:update()
 end
 
-local function pan_right()
-    search.posX = search.posX - o.pan_speed
-    load_results()
-end
-
-local function pan_left()
-    search.posX = search.posX + o.pan_speed
-    if search.posX > 15 then
-        search.posX = 15
+ function list_meta:pan_left()
+    self.posX = self.posX + o.pan_speed
+    if self.posX > 15 then
+        self.posX = 15
         return
     end
-    load_results()
+    self:update()
+end
+
+--creates a new page object
+local function create_page(type, t)
+    local temp = t or _list:new()
+
+    temp.id = temp.ass.id
+    temp.posX = 15
+    temp.type = type
+    temp.keyword = ""
+    temp.flags = ""
+    temp.keybinds = {
+        {"DOWN", "down_page", function() temp:scroll_down() end, {repeatable = true}},
+        {"UP", "up_page", function() temp:scroll_up() end, {repeatable = true}},
+        {"ESC", "close_overlay", function() temp:close() end, {}},
+        -- {"ENTER", "run_current", function() temp.list[temp.selected].funct() end, {}},
+        {"LEFT", "pan_left", function() temp:pan_left() end, {repeatable = true}},
+        {"RIGHT", "pan_right", function() temp:pan_right() end, {repeatable = true}},
+        {"Shift+LEFT", "page_left", function() temp:page_left() end, {}},
+        {"Shift+RIGHT", "page_right", function() temp:page_right() end, {}},
+        {"Ctrl+LEFT", "page_left_search", function() temp:page_left(true) end, {}},
+        {"Ctrl+RIGHT", "page_right_search", function() temp:page_right(true) end, {}},
+        {"Ctrl+ENTER", "run_latest", function() temp:run_search(temp.latest_search.keyword, temp.latest_search.flags) end, {}}
+    }
+    return temp
+end
+
+local KEYBINDS = create_page("key", _list)
+local COMMANDS = create_page("command")
+local OPTIONS = create_page("option")
+local PROPERTIES = create_page("property")
+
+local PAGES = {
+    ["key$"] = KEYBINDS,
+    ["cmd$"] = COMMANDS,
+    ["opt$"] = OPTIONS,
+    ["prop$"] = PROPERTIES
+}
+local PAGE_IDS = {"key$", "cmd$", "opt$", "prop$"}
+
+function list_meta:page_left(match_search)
+    self:close()
+    local index = self.id
+    index = (index == 1 and 4 or index - 1)
+    local new_page = PAGES[ PAGE_IDS[index] ]
+    list_meta.current_page = new_page
+    if match_search then new_page:run_search(self.keyword, self.flags) end
+    new_page:open()
+end
+
+function list_meta:page_right(match_search)
+    self:close()
+    local index = self.id
+    index = (index == 4 and 1 or index + 1)
+    local new_page = PAGES[ PAGE_IDS[index] ]
+    list_meta.current_page = new_page
+    if match_search then new_page:run_search(self.keyword, self.flags) end
+    new_page:open()
+end
+
+--closes all pages that are open
+local function close_all()
+    for _,page in pairs(PAGES) do
+        if not page.hidden then page:close() end
+    end
 end
 
 --handles the search queries
@@ -190,8 +245,18 @@ local function return_spaces(string_len, width)
     return string.rep(" ", num_spaces)
 end
 
+local function create_set(t)
+    if not t then return nil end
+    local flags = {}
+    for flag in t:gmatch("[^%+]+") do
+        flags[flag] = true
+    end
+    return flags
+end
+
 --search keybinds
-local function search_keys(keyword, flags)
+function KEYBINDS:search(keyword, flags)
+    local list = self
     local keys = mp.get_property_native('input-bindings')
     local keybound = {}
 
@@ -269,7 +334,8 @@ local function search_keys(keyword, flags)
 end
 
 --search commands
-local function search_commands(keyword, flags)
+function COMMANDS:search(keyword, flags)
+    local list = self
     local commands = mp.get_property_native('command-list')
 
     for _,command in ipairs(commands) do
@@ -307,7 +373,8 @@ local function search_commands(keyword, flags)
     end
 end
 
-local function search_options(keyword, flags)
+function OPTIONS:search(keyword, flags)
+    local list = self
     local options = mp.get_property_native('options')
 
     for _,option in ipairs(options) do
@@ -348,28 +415,50 @@ local function search_options(keyword, flags)
             result = result..second_space..o.ass_optionsdefault..list.ass_escape(default)..third_space..o.ass_optionsspec..list.ass_escape(options_spec)
             table.insert(list.list, {
                 type = "option",
-                ass = result
+                ass = result,
+                funct = function()
+                    mp.commandv('script-message-to', 'console', 'type', 'set '.. option .. " ")
+                    list:close()
+                end
             })
         end
     end
 end
 
-local function search_property(keyword, flags)
+function PROPERTIES:search(keyword, flags)
+    local list = self
     local properties = mp.get_property_native('property-list', {})
 
     for _,property in ipairs(properties) do
         if compare(property, keyword, flags) then
             table.insert(list.list, {
                 type = "property",
-                ass = o.ass_properties..list.ass_escape(property)..return_spaces(property:len(), 40)..o.ass_propertycurrent..list.ass_escape(mp.get_property(property, ""))})
+                ass = o.ass_properties..list.ass_escape(property)..return_spaces(property:len(), 40)..o.ass_propertycurrent..list.ass_escape(mp.get_property(property, "")),
+                funct = function()
+                    mp.commandv('script-message-to', 'console', 'type', 'print-text ${'.. property .. "} ")
+                    list:close()
+                end
+            })
         end
     end
 end
 
+function list_meta:run_search(keyword, flags)
+    self.latest_search.keyword = keyword
+    self.latest_search.flags = flags
+    self.list = {}
+    self.keyword = keyword
+    self.flags = flags
+    self:search( keyword, create_set(flags) )
+    self:update()
+end
+
 --recieves the input messages
 mp.register_script_message('search_page/input', function(type, keyword, flags)
+    local list = type and PAGES[type] or list_meta.current_page
+
     if keyword == nil then
-        if list.data ~= "" then
+        if list then
             mp.command("script-binding console/_console_1")
             -- remove_bindings()
             list:open()
@@ -377,55 +466,20 @@ mp.register_script_message('search_page/input', function(type, keyword, flags)
         return
     end
 
-    local flagsstr = flags
-    if flagsstr then
-        flags = {}
-        for flag in flagsstr:gmatch("[^%+]+") do
-            flags[flag] = true
-        end
-    end
-
-    list.list = {}
-    search.type = nil
-    if type == "key$" then
-        search.type = "key"
-        search_keys(keyword, flags)
-    end
-    if type == "cmd$" then
-        search.type = "command"
-        search_commands(keyword, flags)
-    end
-    if type == "prop$" then
-        search.type = "property"
-        search_property(keyword, flags)
-    end
-    if type == "opt%" then
-        search.type = "option"
-        search_options(keyword, flags)
-    end
-
-    if not search.type then
-        msg.error("invalid search type")
+    if not list then
+        msg.error("invalid search type - must be one of:")
+        msg.error("'key$', 'cmd$', 'opt$', or 'prop$'")
         return
     end
 
+    close_all()
+    list_meta.current_page = list
+    list:run_search(keyword, flags)
+
     mp.command("script-binding console/_console_1")
-    -- remove_bindings()
-    search.keyword = keyword
-    search.flags = flagsstr
     list.selected = 1
-    load_results()
     list:open()
 end)
-
-list.keybinds = {
-    {"DOWN", "down_page", function() list:scroll_down() end, {repeatable = true}},
-    {"UP", "up_page", function() list:scroll_up() end, {repeatable = true}},
-    {"ESC", "close_overlay", function() list:close() end, {}},
-    {"ENTER", "run_current", function() list.list[list.selected].funct() end, {}},
-    {"LEFT", "pan_left", function() pan_left() end, {repeatable = true}},
-    {"RIGHT", "pan_right", function() pan_right() end, {repeatable = true}}
-}
 
 
 mp.add_key_binding('f12','search-keybinds', function()
