@@ -100,7 +100,7 @@ opt.read_options(o, "search_page")
 
 package.path = (mp.get_opt("scroll_list-directory") or mp.command_native({'expand-path', '~~/scripts'})) .. '/?.lua;' .. package.path
 local _list = require 'scroll-list'
-local list_meta = getmetatable( _list ).__index
+local list_meta = getmetatable( _list ).__scroll_list
 
 local osd_display = mp.get_property_number('osd-duration')
 
@@ -158,7 +158,7 @@ local function create_page(type, t)
         {"DOWN", "down_page", function() temp:scroll_down() end, {repeatable = true}},
         {"UP", "up_page", function() temp:scroll_up() end, {repeatable = true}},
         {"ESC", "close_overlay", function() temp:close() end, {}},
-        -- {"ENTER", "run_current", function() temp.list[temp.selected].funct() end, {}},
+        {"ENTER", "run_current", function() temp[temp.selected].funct() end, {}},
         {"LEFT", "pan_left", function() temp:pan_left() end, {repeatable = true}},
         {"RIGHT", "pan_right", function() temp:pan_right() end, {repeatable = true}},
         {"Shift+LEFT", "page_left", function() temp:page_left() end, {}},
