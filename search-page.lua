@@ -256,7 +256,6 @@ end
 
 --search keybinds
 function KEYBINDS:search(keyword, flags)
-    local list = self
     local keys = mp.get_property_native('input-bindings')
     local keybound = {}
 
@@ -300,23 +299,23 @@ function KEYBINDS:search(keyword, flags)
                 comment = return_spaces(key:len()+section:len()+cmd:len(),60) .. "#" .. keybind.comment
             end
 
-            key = list.ass_escape(key)
-            section = list.ass_escape(section)
-            cmd = list.ass_escape(cmd)
-            comment = list.ass_escape(comment)
+            key = self.ass_escape(key)
+            section = self.ass_escape(section)
+            cmd = self.ass_escape(cmd)
+            comment = self.ass_escape(comment)
 
             --appends the result to the list
-            table.insert(list.list, {
+            table.insert(self.list, {
                 type = "key",
                 ass = o.ass_allkeybindresults .. o.ass_key .. key .. o.ass_section .. section .. o.ass_cmdkey .. cmd .. o.ass_comment .. comment,
                 key = keybind.key,
                 cmd = keybind.cmd,
                 funct = function()
-                    list:close()
+                    self:close()
                     mp.command(keybind.cmd)
 
                     mp.add_timeout(osd_display/1000, function()
-                        list:open()
+                        self:open()
                     end)
                 end
             })
@@ -324,7 +323,7 @@ function KEYBINDS:search(keyword, flags)
     end
 
     --does a second pass of the results and greys out any overwritten keys
-    for _,v in ipairs(list.list) do
+    for _,v in ipairs(self.list) do
         if keybound[v.key] and keybound[v.key].cmd ~= v.cmd then
             v.ass = "{\\alpha&H80&}"..v.ass.."{\\alpha&H00&}"
         end
@@ -335,7 +334,6 @@ end
 
 --search commands
 function COMMANDS:search(keyword, flags)
-    local list = self
     local commands = mp.get_property_native('command-list')
 
     for _,command in ipairs(commands) do
@@ -359,12 +357,12 @@ function COMMANDS:search(keyword, flags)
                 arg_string = arg_string .. " " .. arg.name .. o.ass_argtype.." ("..arg.type..") "
             end
 
-            table.insert(list.list, {
+            table.insert(self.list, {
                 type = "command",
-                ass = o.ass_cmd..list.ass_escape(cmd)..return_spaces(cmd:len(), 20)..arg_string,
+                ass = o.ass_cmd..self.ass_escape(cmd)..return_spaces(cmd:len(), 20)..arg_string,
                 funct = function()
                     mp.commandv('script-message-to', 'console', 'type', command.name .. " ")
-                    list:close()
+                    self:close()
                     msg.info("")
                     msg.info(result_no_ass)
                 end
@@ -374,7 +372,6 @@ function COMMANDS:search(keyword, flags)
 end
 
 function OPTIONS:search(keyword, flags)
-    local list = self
     local options = mp.get_property_native('options')
 
     for _,option in ipairs(options) do
@@ -411,14 +408,14 @@ function OPTIONS:search(keyword, flags)
                 options_spec = "    [ "..mp.get_property_number('option-info/'..option..'/min', "").."  -  ".. mp.get_property_number("option-info/"..option..'/max', "").." ]"
             end
 
-            local result = o.ass_options..list.ass_escape(option).."  "..o.ass_optionstype..type..first_space..o.ass_optvalue..list.ass_escape(opt_value)
-            result = result..second_space..o.ass_optionsdefault..list.ass_escape(default)..third_space..o.ass_optionsspec..list.ass_escape(options_spec)
-            table.insert(list.list, {
+            local result = o.ass_options..self.ass_escape(option).."  "..o.ass_optionstype..type..first_space..o.ass_optvalue..self.ass_escape(opt_value)
+            result = result..second_space..o.ass_optionsdefault..self.ass_escape(default)..third_space..o.ass_optionsspec..self.ass_escape(options_spec)
+            table.insert(self.list, {
                 type = "option",
                 ass = result,
                 funct = function()
                     mp.commandv('script-message-to', 'console', 'type', 'set '.. option .. " ")
-                    list:close()
+                    self:close()
                 end
             })
         end
@@ -426,29 +423,30 @@ function OPTIONS:search(keyword, flags)
 end
 
 function PROPERTIES:search(keyword, flags)
-    local list = self
     local properties = mp.get_property_native('property-list', {})
 
     for _,property in ipairs(properties) do
         if compare(property, keyword, flags) then
-            table.insert(list.list, {
+            table.insert(self.list, {
                 type = "property",
-                ass = o.ass_properties..list.ass_escape(property)..return_spaces(property:len(), 40)..o.ass_propertycurrent..list.ass_escape(mp.get_property(property, "")),
+                ass = o.ass_properties..self.ass_escape(property)..return_spaces(property:len(), 40)..o.ass_propertycurrent..self.ass_escape(mp.get_property(property, "")),
                 funct = function()
                     mp.commandv('script-message-to', 'console', 'type', 'print-text ${'.. property .. "} ")
-                    list:close()
+                    self:close()
                 end
             })
         end
     end
 end
 
+--prepares the page for a search
 function list_meta:run_search(keyword, flags)
     self.latest_search.keyword = keyword
     self.latest_search.flags = flags
     self.list = {}
     self.keyword = keyword
     self.flags = flags
+
     self:search( keyword, create_set(flags) )
     self:update()
 end
@@ -496,8 +494,4 @@ end)
 
 mp.add_key_binding("Alt+f12", "search-options", function()
     mp.commandv('script-message-to', 'console', 'type', 'script-message search_page/input opt$ ')
-end)
-
-mp.add_key_binding("Alt+Shift+Ctrl+f12", "search-all", function ()
-    mp.commandv('script-message-to', 'console', 'type', 'script-message search_page/input all$ ')
 end)
