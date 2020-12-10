@@ -305,7 +305,7 @@ function KEYBINDS:search(keyword, flags)
             comment = self.ass_escape(comment)
 
             --appends the result to the list
-            table.insert(self.list, {
+            self:insert({
                 type = "key",
                 ass = o.ass_allkeybindresults .. o.ass_key .. key .. o.ass_section .. section .. o.ass_cmdkey .. cmd .. o.ass_comment .. comment,
                 key = keybind.key,
@@ -323,7 +323,7 @@ function KEYBINDS:search(keyword, flags)
     end
 
     --does a second pass of the results and greys out any overwritten keys
-    for _,v in ipairs(self.list) do
+    for _,v in self:ipairs() do
         if keybound[v.key] and keybound[v.key].cmd ~= v.cmd then
             v.ass = "{\\alpha&H80&}"..v.ass.."{\\alpha&H00&}"
         end
@@ -357,7 +357,7 @@ function COMMANDS:search(keyword, flags)
                 arg_string = arg_string .. " " .. arg.name .. o.ass_argtype.." ("..arg.type..") "
             end
 
-            table.insert(self.list, {
+            self:insert({
                 type = "command",
                 ass = o.ass_cmd..self.ass_escape(cmd)..return_spaces(cmd:len(), 20)..arg_string,
                 funct = function()
@@ -410,7 +410,7 @@ function OPTIONS:search(keyword, flags)
 
             local result = o.ass_options..self.ass_escape(option).."  "..o.ass_optionstype..type..first_space..o.ass_optvalue..self.ass_escape(opt_value)
             result = result..second_space..o.ass_optionsdefault..self.ass_escape(default)..third_space..o.ass_optionsspec..self.ass_escape(options_spec)
-            table.insert(self.list, {
+            self:insert({
                 type = "option",
                 ass = result,
                 funct = function()
@@ -427,7 +427,7 @@ function PROPERTIES:search(keyword, flags)
 
     for _,property in ipairs(properties) do
         if compare(property, keyword, flags) then
-            table.insert(self.list, {
+            self:insert({
                 type = "property",
                 ass = o.ass_properties..self.ass_escape(property)..return_spaces(property:len(), 40)..o.ass_propertycurrent..self.ass_escape(mp.get_property(property, "")),
                 funct = function()
@@ -443,7 +443,7 @@ end
 function list_meta:run_search(keyword, flags)
     self.latest_search.keyword = keyword
     self.latest_search.flags = flags
-    self.list = {}
+    self:clear()
     self.keyword = keyword
     self.flags = flags
 
