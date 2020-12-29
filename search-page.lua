@@ -98,7 +98,7 @@ local o = {
 
 opt.read_options(o, "search_page")
 
-package.path = (mp.get_opt("scroll_list-directory") or mp.command_native({'expand-path', '~~/scripts'})) .. '/?.lua;' .. package.path
+package.path = mp.command_native({'expand-path', '~~/scripts'}) .. '/?.lua;' .. package.path
 local _list = require 'scroll-list'
 local list_meta = getmetatable( _list ).__scroll_list
 
