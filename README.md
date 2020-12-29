@@ -5,6 +5,8 @@
 This script allows you to search for keybinds, properties, options and commands and have matching entries display on the OSD.
 The search is case insensitive by default, and the script sends the filter directly to a lua string match function, so you can use patterns to get more complex filtering. For options and limitations see the [Queries](#queries) and [Flags](#flags) sections.
 
+This script requires [mpv-scroll-list](https://github.com/CogentRedTester/mpv-scroll-list) to work, simply place `scroll-list.lua` into the `~~/scripts` folder.
+
 ## Pages
 The search pages will remain open until the esc key is pressed. When the page is open the up and down arrow can be used to scroll through the results, and the left and right arrows can be used to pan horizontally to see any cut off values.
 
