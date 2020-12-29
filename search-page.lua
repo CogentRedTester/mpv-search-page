@@ -51,17 +51,18 @@
 local mp = require 'mp'
 local msg = require 'mp.msg'
 local opt = require 'mp.options'
+local utils = require 'mp.utils'
 
 local o = {
-    --enables the 1-9 jumplist for the search pages
-    enable_jumplist = true,
-
     --there seems to be a significant performance hit from having lots of text off the screen
     max_list = 22,
 
     --number of pixels to pan on each click
     --this refers to the horizontal panning
     pan_speed = 100,
+
+    --enables custom keybindings specified in `~~/script-opts/search-page-keybinds.json`
+    custom_keybinds = false,
 
     --all colour options
     ass_header = "{\\c&H00ccff&\\fs40\\b500\\q2\\fnMonospace}",
@@ -102,7 +103,7 @@ package.path = mp.command_native({'expand-path', '~~/scripts'}) .. '/?.lua;' .. 
 local _list = require 'scroll-list'
 local list_meta = getmetatable( _list ).__scroll_list
 
-local osd_display = mp.get_property_number('osd-duration')
+local osd_display = mp.get_property_number('osd-duration', 0) / 1000
 
 list_meta.header_style = o.ass_header
 list_meta.wrapper_style = o.ass_footer
@@ -115,6 +116,43 @@ list_meta.latest_search = {
     keyword = "",
     flags = ""
 }
+
+--creates a new page object
+local function create_page(type, t)
+    local temp = t or _list:new()
+
+    temp.id = temp.ass.id
+    temp.posX = 15
+    temp.type = type
+    temp.keyword = ""
+    temp.flags = ""
+    temp.keybinds = {
+        {"DOWN", "down_page", function() temp:scroll_down() end, {repeatable = true}},
+        {"UP", "up_page", function() temp:scroll_up() end, {repeatable = true}},
+        {"ESC", "close_overlay", function() temp:close() end, {}},
+        {"LEFT", "pan_left", function() temp:pan_left() end, {repeatable = true}},
+        {"RIGHT", "pan_right", function() temp:pan_right() end, {repeatable = true}},
+        {"Shift+LEFT", "page_left", function() temp:page_left() end, {}},
+        {"Shift+RIGHT", "page_right", function() temp:page_right() end, {}},
+        {"Ctrl+LEFT", "page_left_search", function() temp:page_left(true) end, {}},
+        {"Ctrl+RIGHT", "page_right_search", function() temp:page_right(true) end, {}},
+        {"Ctrl+ENTER", "run_latest", function() temp:run_search(temp.latest_search.keyword, temp.latest_search.flags) end, {}}
+    }
+    return temp
+end
+
+local KEYBINDS = create_page("key", _list)
+local COMMANDS = create_page("command")
+local OPTIONS = create_page("option")
+local PROPERTIES = create_page("property")
+
+local PAGES = {
+    ["key$"] = KEYBINDS,
+    ["cmd$"] = COMMANDS,
+    ["opt$"] = OPTIONS,
+    ["prop$"] = PROPERTIES
+}
+local PAGE_IDS = {"key$", "cmd$", "opt$", "prop$"}
 
 --loads the header
 function list_meta:format_header()
@@ -144,44 +182,6 @@ end
     end
     self:update()
 end
-
---creates a new page object
-local function create_page(type, t)
-    local temp = t or _list:new()
-
-    temp.id = temp.ass.id
-    temp.posX = 15
-    temp.type = type
-    temp.keyword = ""
-    temp.flags = ""
-    temp.keybinds = {
-        {"DOWN", "down_page", function() temp:scroll_down() end, {repeatable = true}},
-        {"UP", "up_page", function() temp:scroll_up() end, {repeatable = true}},
-        {"ESC", "close_overlay", function() temp:close() end, {}},
-        {"ENTER", "run_current", function() temp[temp.selected].funct() end, {}},
-        {"LEFT", "pan_left", function() temp:pan_left() end, {repeatable = true}},
-        {"RIGHT", "pan_right", function() temp:pan_right() end, {repeatable = true}},
-        {"Shift+LEFT", "page_left", function() temp:page_left() end, {}},
-        {"Shift+RIGHT", "page_right", function() temp:page_right() end, {}},
-        {"Ctrl+LEFT", "page_left_search", function() temp:page_left(true) end, {}},
-        {"Ctrl+RIGHT", "page_right_search", function() temp:page_right(true) end, {}},
-        {"Ctrl+ENTER", "run_latest", function() temp:run_search(temp.latest_search.keyword, temp.latest_search.flags) end, {}}
-    }
-    return temp
-end
-
-local KEYBINDS = create_page("key", _list)
-local COMMANDS = create_page("command")
-local OPTIONS = create_page("option")
-local PROPERTIES = create_page("property")
-
-local PAGES = {
-    ["key$"] = KEYBINDS,
-    ["cmd$"] = COMMANDS,
-    ["opt$"] = OPTIONS,
-    ["prop$"] = PROPERTIES
-}
-local PAGE_IDS = {"key$", "cmd$", "opt$", "prop$"}
 
 function list_meta:page_left(match_search)
     self:close()
@@ -310,14 +310,7 @@ function KEYBINDS:search(keyword, flags)
                 ass = o.ass_allkeybindresults .. o.ass_key .. key .. o.ass_section .. section .. o.ass_cmdkey .. cmd .. o.ass_comment .. comment,
                 key = keybind.key,
                 cmd = keybind.cmd,
-                funct = function()
-                    self:close()
-                    mp.command(keybind.cmd)
-
-                    mp.add_timeout(osd_display/1000, function()
-                        self:open()
-                    end)
-                end
+                keybind = keybind
             })
         end
     end
@@ -326,6 +319,7 @@ function KEYBINDS:search(keyword, flags)
     for _,v in self:ipairs() do
         if keybound[v.key] and keybound[v.key].cmd ~= v.cmd then
             v.ass = "{\\alpha&H80&}"..v.ass.."{\\alpha&H00&}"
+            v.overwritten = true
         end
         v.key = nil
         v.cmd = nil
@@ -341,31 +335,19 @@ function COMMANDS:search(keyword, flags)
         compare(command.name, keyword, flags)
         then
             local cmd = command.name
-            local result_no_ass = cmd
 
             local arg_string = ""
 
             for _,arg in ipairs(command.args) do
-                if arg.optional then
-                    arg_string = arg_string .. o.ass_optargs
-                    result_no_ass = result_no_ass .. " "
-                else
-                    result_no_ass = result_no_ass .. " !"
-                    arg_string = arg_string .. o.ass_args
-                end
-                result_no_ass = result_no_ass .. arg.name .. "("..arg.type..") "
+                if arg.optional then arg_string = arg_string .. o.ass_optargs
+                else arg_string = arg_string .. o.ass_args end
                 arg_string = arg_string .. " " .. arg.name .. o.ass_argtype.." ("..arg.type..") "
             end
 
             self:insert({
                 type = "command",
                 ass = o.ass_cmd..self.ass_escape(cmd)..return_spaces(cmd:len(), 20)..arg_string,
-                funct = function()
-                    mp.commandv('script-message-to', 'console', 'type', command.name .. " ")
-                    self:close()
-                    msg.info("")
-                    msg.info(result_no_ass)
-                end
+                command = command
             })
         end
     end
@@ -375,24 +357,28 @@ function OPTIONS:search(keyword, flags)
     local options = mp.get_property_native('options')
 
     for _,option in ipairs(options) do
+        local option_info = mp.get_property_native("option-info/"..option) or {name = option}
         local choices = mp.get_property_osd("option-info/"..option..'/choices', ""):gsub(",", " , ")
+        option_info.choices_str = choices
 
         if
-        compare(option, keyword, flags)
-        or compare(choices, keyword, flags)
+            compare(option, keyword, flags)
+            or compare(choices, keyword, flags)
         then
-            local type = mp.get_property_osd('option-info/'..option..'/type', '')
+            local type = option_info.type or ""
 
             --we're saving the string lengths as an incrementing variable so that
             --ass modifiers don't bloat the string. This is for calculating spaces
             local length_no_ass = type:len() + option:len()
             local first_space = return_spaces(length_no_ass, 40)
 
-            local opt_value = "= "..mp.get_property_osd('options/'..option, "")
+            local val = mp.get_property_osd('options/'..option, "")
+            local opt_value = "= "..val
             length_no_ass = length_no_ass + first_space:len() + opt_value:len()
             local second_space = return_spaces(length_no_ass, 60)
 
-            local default =mp.get_property_osd('option-info/'..option..'/default-value', "")
+            local default = mp.get_property_osd('option-info/'..option..'/default-value', "")
+            option_info.default_str = default
             length_no_ass = length_no_ass + default:len() + second_space:len()
             local third_space = return_spaces(length_no_ass, 70)
 
@@ -405,7 +391,7 @@ function OPTIONS:search(keyword, flags)
             or type == "Float"
             or type == "Aspect"
             or type == "Double" then
-                options_spec = "    [ "..mp.get_property_number('option-info/'..option..'/min', "").."  -  ".. mp.get_property_number("option-info/"..option..'/max', "").." ]"
+                options_spec = "    [ "..(option_info.min or "").."  -  "..(option_info.max or "").." ]"
             end
 
             local result = o.ass_options..self.ass_escape(option).."  "..o.ass_optionstype..type..first_space..o.ass_optvalue..self.ass_escape(opt_value)
@@ -413,10 +399,8 @@ function OPTIONS:search(keyword, flags)
             self:insert({
                 type = "option",
                 ass = result,
-                funct = function()
-                    mp.commandv('script-message-to', 'console', 'type', 'set '.. option .. " ")
-                    self:close()
-                end
+                option = option_info,
+                val = val
             })
         end
     end
@@ -427,13 +411,12 @@ function PROPERTIES:search(keyword, flags)
 
     for _,property in ipairs(properties) do
         if compare(property, keyword, flags) then
+            local val = mp.get_property(property, "")
             self:insert({
                 type = "property",
-                ass = o.ass_properties..self.ass_escape(property)..return_spaces(property:len(), 40)..o.ass_propertycurrent..self.ass_escape(mp.get_property(property, "")),
-                funct = function()
-                    mp.commandv('script-message-to', 'console', 'type', 'print-text ${'.. property .. "} ")
-                    self:close()
-                end
+                ass = o.ass_properties..self.ass_escape(property)..return_spaces(property:len(), 40)..o.ass_propertycurrent..self.ass_escape(val),
+                name = property,
+                val = val
             })
         end
     end
@@ -495,3 +478,148 @@ end)
 mp.add_key_binding("Alt+f12", "search-options", function()
     mp.commandv('script-message-to', 'console', 'type', 'script-message search_page/input opt$ ')
 end)
+
+--substitutes string codes for keybind info
+function KEYBINDS:format_command(str, current)
+    return str:gsub("%%.", {
+        ["%%"] = "%",
+        ["%k"] = current.keybind.key,
+        ["%K"] = string.format("%q", current.keybind.key or ""),
+        ["%c"] = current.keybind.cmd,
+        ["%C"] = string.format("%q", current.keybind.cmd or ""),
+        ["%s"] = current.keybind.section,
+        ["%S"] = string.format("%q", current.keybind.section or ""),
+        ["%p"] = current.keybind.priority,
+        ["%P"] = string.format("%q", current.keybind.priority or ""),
+        ["%h"] = current.keybind.comment,
+        ["%H"] = string.format("%q", current.keybind.comment or "")
+    })
+end
+
+--ensures the keybind passes the filter
+function KEYBINDS:pass_filter(keybind)
+    return self[self.selected].overwritten and keybind.filter == "disabled" or keybind.filter == "enabled"
+end
+
+--formats the argument string for commands
+function COMMANDS:format_args(args, separator)
+    if not args or #args < 1 then return "" end
+    local output = (args[1].optional and "" or "!")..args[1].name.." ("..args[1].type..")"
+
+    for i = 2, #args do
+        output = output..separator..(args[i].optional and "" or "!")..args[i].name.." ("..args[i].type..")"
+    end
+    return output
+end
+
+--substitutes string codes for command info
+function COMMANDS:format_command(str, current, bind)
+    return str:gsub("%%.", {
+        ["%%"] = "%",
+        ["%n"] = current.command.name,
+        ["%N"] = string.format("%q", current.command.name),
+        ["%a"] = self:format_args(current.command.args, bind.separator or " "),
+        ["%A"] = string.format("%q", self:format_args(current.command.args, bind.separator or " "))
+    })
+end
+
+--formats the option choices as defined by user options
+function OPTIONS:format_choices(choices, separator, format)
+    if not choices or #choices < 1 then return "" end
+    local output = format and string.format("%q", choices[1]) or choices[1]
+    for i = 2, #choices do
+        output = output..separator..(format and string.format("%q", choices[i]) or choices[i])
+    end
+    return output
+end
+
+--substitutes string codes for option info
+function OPTIONS:format_command(str, current, bind)
+    return str:gsub("%%.", {
+        ["%%"] = "%",
+        ["%n"] = current.option.name,
+        ["%N"] = string.format("%q", current.option.name),
+        ["%v"] = current.val or "",
+        ["%V"] = string.format("%q", current.val or ""),
+        ["%c"] = self:format_choices(current.option.choices, bind.separator or ",", bind.format_choices),
+        ["%C"] = string.format("%q", self:format_choices(current.option.choices, bind.separator or ",", bind.format_choices)),
+        ["%d"] = current.option.default_str,
+        ["%D"] = string.format("%q", current.option.default_str),
+        ["%u"] = current.option.max or "",
+        ["%U"] = string.format("%q", current.option.max or ""),
+        ["%l"] = current.option.min or "",
+        ["%L"] = string.format("%q", current.option.min or "")
+    })
+end
+
+--checks if the current option passes the filter
+function OPTIONS:pass_filter(keybind)
+    return self[self.selected].option.type == keybind.filter
+end
+
+--substitutes string codes for property info
+function PROPERTIES:format_command(str, current)
+    return str:gsub("%%.", {
+        ["%%"] = "%",
+        ["%n"] = current.name,
+        ["%N"] = string.format("%q", current.name),
+        ["%v"] = current.val,
+        ["%V"] = string.format("%q", current.val)
+    })
+end
+
+--formats the command strings for each comand
+function list_meta:format_command_table(t, keybind)
+    local current = self.list[self.selected]
+    local copy = {}
+    for i = 1, #t do copy[i] = self:format_command(t[i], current, keybind) end
+    return copy
+end
+
+--a timer to re-enable the page if temporarily hidden by a keybind
+local hide_timer = mp.add_timeout(osd_display, function() list_meta.current_page:update() end)
+hide_timer:kill()
+
+--runs one of the custom commands
+local function custom_command(t, page, keybind)
+    if type(t[1]) == "table" then
+        for i = 1, #t do
+            custom_command(t[i], page, keybind)
+        end
+    else
+        if keybind.filter and not page:pass_filter(keybind) then return end
+        local custom_cmd = page:format_command_table(t, keybind)
+        msg.debug("running command: " .. utils.to_string(custom_cmd))
+
+        if keybind.close_page then page:close()
+        elseif keybind.hide_page then
+            page.ass:remove()
+            hide_timer:kill()
+            hide_timer:resume()
+        end
+
+        --if the code is given we use the mp.command API call
+        if custom_cmd[1] == "!c" then mp.command(custom_cmd[2])
+        else mp.command_native(custom_cmd) end
+    end
+end
+
+--loading the custom keybinds
+if o.custom_keybinds then
+    local path = mp.command_native({"expand-path", "~~/script-opts"}).."/search-page-keybinds.json"
+    local custom_keybinds = assert(io.open( path ))
+    if custom_keybinds then
+        local json = custom_keybinds:read("*a")
+        custom_keybinds:close()
+
+        json = utils.parse_json(json)
+        if not json then error("invalid json syntax for "..path) end
+        custom_keybinds = json
+
+        for key, page in pairs(PAGES) do
+            for i,keybind in ipairs(custom_keybinds[key]) do
+                table.insert(page.keybinds, {keybind.key, "custom"..tostring(i), function() custom_command(keybind.command, page, keybind) end, {} })
+            end
+        end
+    end
+end
