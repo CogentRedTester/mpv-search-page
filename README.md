@@ -6,9 +6,9 @@ This script allows you to search for keybinds, properties, options and commands 
 The search is case insensitive by default, and the script sends the filter directly to a lua string match function, so you can use patterns to get more complex filtering. For options and limitations see the [Queries](#queries) and [Flags](#flags) sections.
 
 ## Pages
-The search page will remain open until the esc key is pressed. When the search page is open the up and down arrow can be used to scroll through the results, and the left and right arrows can be used to pan horizontally to see any cut off values.
+The search pages will remain open until the esc key is pressed. When the page is open the up and down arrow can be used to scroll through the results, and the left and right arrows can be used to pan horizontally to see any cut off values.
 
-There are 4 main search pages:
+There are 4 main search pages, each page has its own independant state, and while open one can cycle between them in the below order:
 
 ### Keybinds
 ![keybinds_page](screenshots/keybindings_page.png)
@@ -30,19 +30,19 @@ The search page shows all of the command names in lavendar on the left. The foll
 
 Pressing keys 1-9 will load the command for that respective entry into console.lua, and print the arguments and their types to the console for reference. Compulsory arguments will have an exclamation mark before them.
 
-### Properties
-![property_page](screenshots/property_page.png)
-
-The properties page shows all of the properties, and their current values, for the current file. Only the property name is included in the search. Note that the property list contains most options as well.
-
-The search page simply contains the property name on the left, followed by it's current value (if it has one).
-
 ### Options
 ![option_page](screenshots/option_page.png)
 
 The options page is for searching options that can be set on the commandline or through mpv.conf. Most of these options have matching properties. The script searches the option name, as well as any choices that are available.
 
 The option page contains the option name in lavendar, directly followed by the option type in yellow. The cyan entry is the current value of the option, if available, and the yellow is the default option value. The green value shows different information depending on the option type; if the option is a float, integer, double, aspect, or bytesize, then the valid option range is displayed; if the option is a choice, then the valid choices are listed.
+
+### Properties
+![property_page](screenshots/property_page.png)
+
+The properties page shows all of the properties, and their current values, for the current file. Only the property name is included in the search. Note that the property list contains most options as well.
+
+The search page simply contains the property name on the left, followed by it's current value (if it has one).
 
 ## Keybinds
 
@@ -52,7 +52,6 @@ The default keybinds are listed below, these can be overwritten using input.conf
     Ctrl+f12            script-binding search-commands
     Shift+f12           script-binding search-properties
     Alt+f12             script-binding search-options
-    Ctrl+Shift+Alt+f12  script-binding search-all
 
 In addition the following keybinds are dynamically created when the search page is open, these cannot currently be changed:
 
@@ -61,6 +60,11 @@ In addition the following keybinds are dynamically created when the search page 
     up              scrolls the page up
     left            pans the whole search page left
     right           pans the whole search page right
+    Shift+left      open prev page
+    Shift+right     open next page
+    Ctrl+left       open prev page and run latest search
+    Ctrl+right      open next page and run latest search
+    Ctrl+enter      re-run latest search on current page
     enter           see jumplist
     1-9             see jumplist
 
@@ -84,14 +88,12 @@ Here is an example of a query to search keybinds for 'del':
 
     script-message search_page/input key$ "cycle vid"
 
-Query types can also be combined, i.e. `key$cmd$`, to search multiple categories at once.
 The valid query types are as follows:
 
     key$    searches keybindings
     cmd$    searches command
     prop$   searches properties
     opt$    searches options
-    all$    searches all
 
 Sending a query message without any arguments (or with only the type argument) will reopen the last search page. Sending a query with an empty string `""` will show all results for the selected category.
 
