@@ -51,6 +51,7 @@
 local mp = require 'mp'
 local msg = require 'mp.msg'
 local opt = require 'mp.options'
+local utils = require 'mp.utils'
 
 local o = {
     --enables the 1-9 jumplist for the search pages
@@ -97,6 +98,30 @@ local o = {
 }
 
 opt.read_options(o, "search_page")
+
+-----------------------------------------------
+-- Function to interface with mpv-user-input --
+-----------------------------------------------
+local counter = 1
+local function get_user_input(funct, options)
+    if options then
+        options = utils.format_json(options)
+        if not options then error("table cannot be converted to json string") ; return end
+    end
+
+    -- create a callback for user-input to respond to
+    local response_string = mp.get_script_name().."/__user_input_request/"..counter
+    counter = counter + 1
+    mp.register_script_message(response_string, function(response)
+        mp.unregister_script_message(response_string)
+        funct(response)
+    end)
+
+    mp.commandv("script-message-to", "user_input", "request-user-input", options or "", response_string)
+end
+-----------------------------------------------
+-----------------------------------------------
+-----------------------------------------------
 
 package.path = mp.command_native({'expand-path', '~~/scripts'}) .. '/?.lua;' .. package.path
 local _list = require 'scroll-list'
@@ -451,47 +476,45 @@ function list_meta:run_search(keyword, flags)
     self:update()
 end
 
---recieves the input messages
-mp.register_script_message('search_page/input', function(type, keyword, flags)
-    local list = type and PAGES[type] or list_meta.current_page
+local function strip_whitespace(str)
+    if not str then return nil end
+    return str:gsub("^(%s+)", ""):gsub("(%s+)$", "")
+end
 
-    if keyword == nil then
-        if list then
-            mp.command("script-binding console/_console_1")
-            -- remove_bindings()
-            list:open()
-        end
-        return
-    end
+local function handle_user_input(type, input)
+    if input == nil then return end
+    local index = input:find("[^%%]|")
+    local keyword = strip_whitespace( input:sub(1, index) )
+    local flags = index and strip_whitespace( input:sub(index + 2) )
 
-    if not list then
-        msg.error("invalid search type - must be one of:")
-        msg.error("'key$', 'cmd$', 'opt$', or 'prop$'")
-        return
-    end
-
+    local list = PAGES[type]
     close_all()
     list_meta.current_page = list
     list:run_search(keyword, flags)
-
-    mp.command("script-binding console/_console_1")
     list.selected = 1
     list:open()
-end)
-
+end
 
 mp.add_key_binding('f12','search-keybinds', function()
-    mp.commandv('script-message-to', 'console', 'type', 'script-message search_page/input key$ ')
+    get_user_input(function(input)
+        handle_user_input("key$", input)
+    end, {text = "Enter query for keybind search:" })
 end)
 
 mp.add_key_binding("Ctrl+f12",'search-commands', function()
-    mp.commandv('script-message-to', 'console', 'type', 'script-message search_page/input cmd$ ')
+    get_user_input(function(input)
+        handle_user_input("cmd$", input)
+    end, {text = "Enter query for command search:" })
 end)
 
 mp.add_key_binding("Shift+f12", "search-properties", function()
-    mp.commandv('script-message-to', 'console', 'type', 'script-message search_page/input prop$ ')
+    get_user_input(function(input)
+        handle_user_input("prop$", input)
+    end, {text = "Enter query for property search:" })
 end)
 
 mp.add_key_binding("Alt+f12", "search-options", function()
-    mp.commandv('script-message-to', 'console', 'type', 'script-message search_page/input opt$ ')
+    get_user_input(function(input)
+        handle_user_input("opt$", input)
+    end, {text = "Enter query for option search:" })
 end)
