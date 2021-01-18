@@ -125,6 +125,11 @@ local function get_user_input(funct, options)
 
     mp.commandv("script-message-to", "user_input", "request-user-input", options)
 end
+local function cancel_user_input(id)
+    if not id then id = mp.get_script_name() end
+    if type(id) ~= "string" then error("must provide a string id") end
+    mp.commandv("script-message-to", "user_input", "cancel-user-input", id)
+end
 -----------------------------------------------
 -----------------------------------------------
 -----------------------------------------------
@@ -192,11 +197,12 @@ local function create_page(type, t)
         {"ENTER", "run_current", function() temp[temp.selected].funct() end, {}},
         {"LEFT", "pan_left", function() temp:pan_left() end, {repeatable = true}},
         {"RIGHT", "pan_right", function() temp:pan_right() end, {repeatable = true}},
-        {"Shift+LEFT", "page_left", function() temp:page_left() end, {}},
-        {"Shift+RIGHT", "page_right", function() temp:page_right() end, {}},
-        {"Ctrl+LEFT", "page_left_search", function() temp:page_left(true) end, {}},
-        {"Ctrl+RIGHT", "page_right_search", function() temp:page_right(true) end, {}},
-        {"Ctrl+ENTER", "run_latest", function() temp:run_search(temp.latest_search.keyword, temp.latest_search.flags) end, {}}
+        {"Shift+LEFT", "page_left", function() temp:move_page(-1) end, {}},
+        {"Shift+RIGHT", "page_right", function() temp:move_page(1) end, {}},
+        {"Ctrl+LEFT", "page_left_search", function() temp:move_page(-1, true) end, {}},
+        {"Ctrl+RIGHT", "page_right_search", function() temp:move_page(1, true) end, {}},
+        {"Ctrl+ENTER", "run_latest", function() temp:run_search(temp.latest_search.keyword, temp.latest_search.flags) end, {}},
+        {"f12", "open_search", function() temp:get_input() end, {}}
     }
     return temp
 end
@@ -213,21 +219,15 @@ local PAGES = {
     ["prop$"] = PROPERTIES
 }
 local PAGE_IDS = {"key$", "cmd$", "opt$", "prop$"}
+list_meta.current_page = KEYBINDS
 
-function list_meta:page_left(match_search)
+function list_meta:move_page(direction, match_search)
+    cancel_user_input()
     self:close()
     local index = self.id
-    index = (index == 1 and 4 or index - 1)
-    local new_page = PAGES[ PAGE_IDS[index] ]
-    list_meta.current_page = new_page
-    if match_search then new_page:run_search(self.keyword, self.flags) end
-    new_page:open()
-end
+    index = (index + direction) % 4
+    if index == 0 then index = 4 end
 
-function list_meta:page_right(match_search)
-    self:close()
-    local index = self.id
-    index = (index == 4 and 1 or index + 1)
     local new_page = PAGES[ PAGE_IDS[index] ]
     list_meta.current_page = new_page
     if match_search then new_page:run_search(self.keyword, self.flags) end
@@ -501,26 +501,30 @@ local function handle_user_input(type, input)
     list:open()
 end
 
-mp.add_key_binding('f12','search-keybinds', function()
+function KEYBINDS:get_input()
     get_user_input(function(input)
         handle_user_input("key$", input)
     end, {text = "Enter query for keybind search:", replace = true})
-end)
+end
 
-mp.add_key_binding("Ctrl+f12",'search-commands', function()
+function COMMANDS:get_input()
     get_user_input(function(input)
         handle_user_input("cmd$", input)
     end, {text = "Enter query for command search:", replace = true})
-end)
+end
 
-mp.add_key_binding("Shift+f12", "search-properties", function()
-    get_user_input(function(input)
-        handle_user_input("prop$", input)
-    end, {text = "Enter query for property search:", replace = true})
-end)
-
-mp.add_key_binding("Alt+f12", "search-options", function()
+function OPTIONS:get_input()
     get_user_input(function(input)
         handle_user_input("opt$", input)
     end, {text = "Enter query for option search:", replace = true})
+end
+
+function PROPERTIES:get_input()
+    get_user_input(function(input)
+        handle_user_input("opt$", input)
+    end, {text = "Enter query for option search:", replace = true})
+end
+
+mp.add_key_binding("f12", "open-search-page", function()
+    list_meta.current_page:open()
 end)
