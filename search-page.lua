@@ -58,7 +58,7 @@ local o = {
     enable_jumplist = true,
 
     --there seems to be a significant performance hit from having lots of text off the screen
-    max_list = 22,
+    max_list = 21,
 
     --number of pixels to pan on each click
     --this refers to the horizontal panning
@@ -504,23 +504,23 @@ end
 mp.add_key_binding('f12','search-keybinds', function()
     get_user_input(function(input)
         handle_user_input("key$", input)
-    end, {text = "Enter query for keybind search:" })
+    end, {text = "Enter query for keybind search:", replace = true})
 end)
 
 mp.add_key_binding("Ctrl+f12",'search-commands', function()
     get_user_input(function(input)
         handle_user_input("cmd$", input)
-    end, {text = "Enter query for command search:" })
+    end, {text = "Enter query for command search:", replace = true})
 end)
 
 mp.add_key_binding("Shift+f12", "search-properties", function()
     get_user_input(function(input)
         handle_user_input("prop$", input)
-    end, {text = "Enter query for property search:" })
+    end, {text = "Enter query for property search:", replace = true})
 end)
 
 mp.add_key_binding("Alt+f12", "search-options", function()
     get_user_input(function(input)
         handle_user_input("opt$", input)
-    end, {text = "Enter query for option search:" })
+    end, {text = "Enter query for option search:", replace = true})
 end)
