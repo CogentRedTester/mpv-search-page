@@ -158,7 +158,7 @@ local function create_page(type, t)
         {"DOWN", "down_page", function() temp:scroll_down() end, {repeatable = true}},
         {"UP", "up_page", function() temp:scroll_up() end, {repeatable = true}},
         {"ESC", "close_overlay", function() temp:close() end, {}},
-        {"ENTER", "run_current", function() temp[temp.selected].funct() end, {}},
+        {"ENTER", "run_current", function() if temp[temp.selected] then temp[temp.selected].funct() end end, {}},
         {"LEFT", "pan_left", function() temp:pan_left() end, {repeatable = true}},
         {"RIGHT", "pan_right", function() temp:pan_right() end, {repeatable = true}},
         {"Shift+LEFT", "page_left", function() temp:page_left() end, {}},
