@@ -160,7 +160,7 @@ function list_meta:format_header()
     else
         flags = " ("..flags..")"
     end
-    self:append(o.ass_header.."Search results for "..self.type ..' "'..self.ass_escape(self.keyword)..'"'..flags)
+    self:append(o.ass_header.."Search results for "..self.type ..' "'..self.ass_escape(self.keyword or "")..'"'..flags)
     self:newline()
     self:append(o.ass_underline.."---------------------------------------------------------")
     self:newline()
@@ -187,8 +187,8 @@ local function create_page(type, t)
     temp.id = temp.ass.id
     temp.posX = 15
     temp.type = type
-    temp.keyword = ""
-    temp.flags = ""
+    temp.keyword = nil
+    temp.flags = nil
     temp.keybinds = {
         {"DOWN", "down_page", function() temp:scroll_down() end, {repeatable = true}},
         {"UP", "up_page", function() temp:scroll_up() end, {repeatable = true}},
@@ -230,7 +230,7 @@ function list_meta:move_page(direction, match_search)
     local new_page = PAGES[ PAGE_IDS[index] ]
     list_meta.current_page = new_page
     if match_search then new_page:run_search(self.keyword, self.flags) end
-    new_page:open()
+    new_page:open_wrapper()
 end
 
 --closes all pages that are open
@@ -345,7 +345,7 @@ function KEYBINDS:search(keyword, flags)
                     mp.command(keybind.cmd)
 
                     mp.add_timeout(osd_display/1000, function()
-                        self:open()
+                        self:open_wrapper()
                     end)
                 end
             })
@@ -471,6 +471,8 @@ end
 
 --prepares the page for a search
 function list_meta:run_search(keyword, flags)
+    self.empty_text = "no results"
+
     self.latest_search.keyword = keyword
     self.latest_search.flags = flags
     self:clear()
@@ -479,6 +481,12 @@ function list_meta:run_search(keyword, flags)
 
     self:search( keyword, create_set(flags) )
     self:update()
+end
+
+function list_meta:open_wrapper()
+    if self.keyword == nil then self.empty_text = "Press f12 to enter search query" end
+    self:open()
+    if self.keyword == nil then self:get_input() end
 end
 
 local function strip_whitespace(str)
@@ -520,10 +528,10 @@ end
 
 function PROPERTIES:get_input()
     get_user_input(function(input)
-        handle_user_input("opt$", input)
-    end, {text = "Enter query for option search:", replace = true})
+        handle_user_input("prop$", input)
+    end, {text = "Enter query for property search:", replace = true})
 end
 
 mp.add_key_binding("f12", "open-search-page", function()
-    list_meta.current_page:open()
+    list_meta.current_page:open_wrapper()
 end)
