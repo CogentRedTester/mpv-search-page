@@ -201,35 +201,45 @@ local function create_page(type, t)
         {"Ctrl+LEFT", "page_left_search", function() temp:move_page(-1, true) end, {}},
         {"Ctrl+RIGHT", "page_right_search", function() temp:move_page(1, true) end, {}},
         {"Ctrl+ENTER", "run_latest", function() temp:run_search(temp.latest_search.keyword, temp.latest_search.flags) end, {}},
-        {"f12", "open_search", function() temp:get_input() end, {}}
+        {"f12", "open_search", function() temp:get_input(false) end, {}},
+        {"Shift+f12", "open_flag_search", function() temp:get_input(true) end, {}}
     }
     return temp
 end
 
-local KEYBINDS = create_page("key", _list)
+local KEYBINDS = create_page("keybind", _list)
 local COMMANDS = create_page("command")
 local OPTIONS = create_page("option")
 local PROPERTIES = create_page("property")
 
+-- a table to track the different pages based on numerical id or type
 local PAGES = {
-    ["key$"] = KEYBINDS,
-    ["cmd$"] = COMMANDS,
-    ["opt$"] = OPTIONS,
-    ["prop$"] = PROPERTIES
+    [1] = KEYBINDS,
+    ["keybind"] = KEYBINDS,
+    [2] = COMMANDS,
+    ["command"] = COMMANDS,
+    [3] = OPTIONS,
+    ["option"] = OPTIONS,
+    [4] = PROPERTIES,
+    ["property"] = PROPERTIES
 }
-local PAGE_IDS = {"key$", "cmd$", "opt$", "prop$"}
 list_meta.current_page = KEYBINDS
 
 function list_meta:move_page(direction, match_search)
-    cancel_user_input()
+    cancel_user_input("search_term")
+    cancel_user_input("flags")
     self:close()
     local index = self.id
     index = (index + direction) % 4
     if index == 0 then index = 4 end
 
-    local new_page = PAGES[ PAGE_IDS[index] ]
+    local new_page = PAGES[index]
     list_meta.current_page = new_page
-    if match_search then new_page:run_search(self.keyword, self.flags) end
+    if match_search then
+        new_page.keyword = self.keyword
+        new_page.flags = self.flags
+        new_page:run_search()
+    end
     new_page:open_wrapper()
 end
 
@@ -470,23 +480,24 @@ function PROPERTIES:search(keyword, flags)
 end
 
 --prepares the page for a search
-function list_meta:run_search(keyword, flags)
+function list_meta:run_search()
+    if self.keyword == nil then return end
     self.empty_text = "no results"
 
-    self.latest_search.keyword = keyword
-    self.latest_search.flags = flags
+    self.selected = 1
+    list_meta.current_page = self
+    self.latest_search.keyword = self.keyword
+    self.latest_search.flags = self.flags
     self:clear()
-    self.keyword = keyword
-    self.flags = flags
 
-    self:search( keyword, create_set(flags) )
+    self:search( self.keyword, create_set(self.flags) )
     self:update()
 end
 
-function list_meta:open_wrapper()
+function list_meta:open_wrapper(advanced)
     if self.keyword == nil then self.empty_text = "Press f12 to enter search query" end
     self:open()
-    if self.keyword == nil then self:get_input() end
+    if self.keyword == nil then self:get_input(advanced) end
 end
 
 local function strip_whitespace(str)
@@ -494,44 +505,39 @@ local function strip_whitespace(str)
     return str:gsub("^(%s+)", ""):gsub("(%s+)$", "")
 end
 
-local function handle_user_input(type, input)
+function list_meta:handle_query_input(input, wait_for_flag)
     if input == nil then return end
-    local index = input:find("[^%%]|")
-    local keyword = strip_whitespace( input:sub(1, index) )
-    local flags = index and strip_whitespace( input:sub(index + 2) )
-
-    local list = PAGES[type]
-    close_all()
-    list_meta.current_page = list
-    list:run_search(keyword, flags)
-    list.selected = 1
-    list:open()
+    self.keyword = strip_whitespace(input)
+    self.flags = nil
+    if not wait_for_flag then self:run_search() end
 end
 
-function KEYBINDS:get_input()
-    get_user_input(function(input)
-        handle_user_input("key$", input)
-    end, {text = "Enter query for keybind search:", replace = true})
+function list_meta:handle_flag_input(input, err)
+    if input == nil and err ~= "exitted" then return
+    elseif input == nil then self:run_search() ; return end
+
+    self.flags = strip_whitespace(input):gsub("%W+", "+")
+    self:run_search()
 end
 
-function COMMANDS:get_input()
+function list_meta:get_input(get_flags)
     get_user_input(function(input)
-        handle_user_input("cmd$", input)
-    end, {text = "Enter query for command search:", replace = true})
-end
+        self:handle_query_input(input, get_flags)
+    end, {id = "search_term", text = "Enter query for "..(get_flags and "advanced " or "")..self.type.." search:", replace = true})
 
-function OPTIONS:get_input()
-    get_user_input(function(input)
-        handle_user_input("opt$", input)
-    end, {text = "Enter query for option search:", replace = true})
-end
-
-function PROPERTIES:get_input()
-    get_user_input(function(input)
-        handle_user_input("prop$", input)
-    end, {text = "Enter query for property search:", replace = true})
+    if get_flags then
+        get_user_input(function(input, err)
+            self:handle_flag_input(input, err)
+        end, {id = "flags", text = "Enter flags:"})
+    else
+        cancel_user_input("flags")
+    end
 end
 
 mp.add_key_binding("f12", "open-search-page", function()
     list_meta.current_page:open_wrapper()
+end)
+
+mp.add_key_binding("Shift+f12", "open-search-page/advanced", function()
+    list_meta.current_page:open_wrapper(true)
 end)
