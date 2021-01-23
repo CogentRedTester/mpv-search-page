@@ -101,14 +101,15 @@ Sending a query message without any arguments (or with only the type argument) w
 
 ## Lua Patterns
 
-This script sends queries directly into the Lua string find function, with the only modification being that the query is converted into lowercase. The find function supports something called [patterns](http://lua-users.org/wiki/PatternsTutorial) to identify any matching substrings. In order to facilitate this there are a number of symbols, such as `? % . ^ [ ]`, which are reserved for pattern creation. If you try to search with any of these symbols you may get some unexpected results; however, you can escape these characters using a `%` sign. If you wish to use patterns to run extremely precise searches, then you may want to look at the [flags](#flags) section for how to make the queries more pattern friendly.
+This script sends queries into the Lua string find function, the find function supports something called [patterns](http://lua-users.org/wiki/PatternsTutorial) to help make more complex searches. In order to facilitate this there are a number of symbols (`^$()%.[]*+-?`), which are reserved for pattern creation.
+By default the script will escape these special characters to make searches more convenient, however this can be disabled with the `pattern` [flag](#flags).
 
 ## Flags
 
-By default the script will convert both the search query, and all the strings it scans into lower case to maximise the number of results. It returns any result that contains the full query somewhere in its values. Flags can be used to modify this behaviour. Flags are an argument you can add after the query string, currently there are 3:
+By default the script will convert both the search query, and all the strings it scans into lower case to maximise the number of results, as well as escaping special pattern characters. It returns any result that contains the full query somewhere in its values. Flags can be used to modify this behaviour. Flags are an argument you can add after the query string, currently there are 3:
 
         wrap        search for a whole word only (may not work with some symbols)
-        pattern     don't convert the query to lowercase, required for some Lua patterns
+        pattern     don't convert the query to lowercase and don't escape pattern characters
         exact       don't convert anything into lowercase
 
 These flags can be combined, so for example a query `t wrap` would normally result in both lower and upper case t matches, however, `t wrap+exact` will return only lowercase t. The pattern flag is only useful when doing some funky pattern stuff, for example:
