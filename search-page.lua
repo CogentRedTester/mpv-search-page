@@ -484,13 +484,34 @@ function list_meta:run_search()
     if self.keyword == nil then return end
     self.empty_text = "no results"
 
+    local flag_set = create_set(self.flags)
+
+    --unless the pattern flag is used we'll escape the special pattern characters
+    --characters: ^$()%.[]*+-?
+    local keyword = self.keyword
+    if not flag_set or not flag_set.pattern then
+        keyword = keyword:gsub(".", {
+            ["^"] = "%^",
+            ["$"] = "%$",
+            ["("] = "%(",
+            [")"] = "%)",
+            ["%"] = "%%",
+            ["."] = "%.",
+            ["["] = "%[",
+            ["]"] = "%]",
+            ["*"] = "%*",
+            ["+"] = "%+",
+            ["-"] = "%-"
+        })
+    end
+
     self.selected = 1
     list_meta.current_page = self
     self.latest_search.keyword = self.keyword
     self.latest_search.flags = self.flags
     self:clear()
 
-    self:search( self.keyword, create_set(self.flags) )
+    self:search( keyword, flag_set)
     self:update()
 end
 
