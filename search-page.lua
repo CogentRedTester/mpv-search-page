@@ -99,42 +99,8 @@ local o = {
 
 opt.read_options(o, "search_page")
 
------------------------------------------------
--- Function to interface with mpv-user-input --
------------------------------------------------
-local counter = 1
-local function get_user_input(funct, options)
-    local name = mp.get_script_name()
-    options = options or {}
-    options.id = name .. '/' .. (options.id or "")
-    options.text = options.text or (name.." is requesting user input:")
-
-    local response_string = name.."/__user_input_request/"..counter
-    options.response = response_string
-
-    options = utils.format_json(options)
-    if not options then error("table cannot be converted to json string") ; return end
-
-    -- create a callback for user-input to respond to
-    counter = counter + 1
-    mp.register_script_message(response_string, function(response)
-        mp.unregister_script_message(response_string)
-        response = utils.parse_json(response)
-        funct(response.input, response.err)
-    end)
-
-    mp.commandv("script-message-to", "user_input", "request-user-input", options)
-end
-local function cancel_user_input(id)
-    id = mp.get_script_name() .. '/' .. (id or "")
-    mp.commandv("script-message-to", "user_input", "cancel-user-input", id)
-end
------------------------------------------------
------------------------------------------------
------------------------------------------------
-
-package.path = mp.command_native({'expand-path', '~~/scripts'}) .. '/?.lua;' .. package.path
-local _list = require 'scroll-list'
+local ui = dofile(mp.command_native({"expand-path", "~~/scripts/user-input-module.lua"}))
+local _list = dofile(mp.command_native({"expand-path", "~~/scripts/scroll-list.lua"}))
 local list_meta = getmetatable( _list ).__scroll_list
 
 local osd_display = mp.get_property_number('osd-duration')
@@ -226,8 +192,8 @@ local PAGES = {
 list_meta.current_page = KEYBINDS
 
 function list_meta:move_page(direction, match_search)
-    cancel_user_input("search_term")
-    cancel_user_input("flags")
+    ui.cancel_user_input("search_term")
+    ui.cancel_user_input("flags")
     self:close()
     local index = self.id
     index = (index + direction) % 4
@@ -542,16 +508,16 @@ function list_meta:handle_flag_input(input, err)
 end
 
 function list_meta:get_input(get_flags)
-    get_user_input(function(input)
+    ui.get_user_input(function(input)
         self:handle_query_input(input, get_flags)
     end, {id = "search_term", text = "Enter query for "..(get_flags and "advanced " or "")..self.type.." search:", replace = true})
 
     if get_flags then
-        get_user_input(function(input, err)
+        ui.get_user_input(function(input, err)
             self:handle_flag_input(input, err)
         end, {id = "flags", text = "Enter flags:"})
     else
-        cancel_user_input("flags")
+        ui.cancel_user_input("flags")
     end
 end
 
