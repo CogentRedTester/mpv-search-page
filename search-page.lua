@@ -99,8 +99,9 @@ local o = {
 
 opt.read_options(o, "search_page")
 
-local ui = dofile(mp.command_native({"expand-path", "~~/scripts/user-input-module.lua"}))
-local _list = dofile(mp.command_native({"expand-path", "~~/scripts/scroll-list.lua"}))
+package.path = mp.command_native({"expand-path", "~~/script-modules/?.lua;"})..package.path
+local ui = require "user-input-module"
+local _list = require "scroll-list"
 local list_meta = getmetatable( _list ).__scroll_list
 
 local osd_display = mp.get_property_number('osd-duration')
