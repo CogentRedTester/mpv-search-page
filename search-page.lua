@@ -462,6 +462,15 @@ function list_meta:run_search()
         })
     end
 
+    --error handling for users who enter an invalid pattern
+    if flag_set and flag_set.pattern then
+        local success, result = pcall(function() (""):find(keyword) end)
+        if not success then
+            msg.error(result:match("missing.+$"))
+            return
+        end
+    end
+
     self.selected = 1
     CURRENT_PAGE = self
     LATEST_SEARCH.keyword = self.keyword
