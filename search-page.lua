@@ -54,9 +54,6 @@ local opt = require 'mp.options'
 local utils = require 'mp.utils'
 
 local o = {
-    --enables the 1-9 jumplist for the search pages
-    enable_jumplist = true,
-
     --there seems to be a significant performance hit from having lots of text off the screen
     max_list = 21,
 
