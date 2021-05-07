@@ -207,13 +207,6 @@ function list_meta:move_page(direction, match_search)
     new_page:open_wrapper()
 end
 
---closes all pages that are open
-local function close_all()
-    for _,page in pairs(PAGES) do
-        if not page.hidden then page:close() end
-    end
-end
-
 --handles the search queries
 local function compare(str, keyword, flags)
     if not flags then
