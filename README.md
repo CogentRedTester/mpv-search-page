@@ -8,11 +8,13 @@ The search is case insensitive by default, and the script sends the filter direc
 This script requires [mpv-scroll-list](https://github.com/CogentRedTester/mpv-scroll-list) to work, simply place `scroll-list.lua` into the `~~/script-modules` folder.
 
 ## Pages
+
 The search pages will remain open until the esc key is pressed. When the page is open the up and down arrow can be used to scroll through the results, and the left and right arrows can be used to pan horizontally to see any cut off values.
 
 There are 4 main search pages, each page has its own independant state, and while open one can cycle between them in the below order:
 
 ### Keybinds
+
 ![keybinds_page](screenshots/keybindings_page.png)
 
 The keybind page is for searching keybindings. By default the script searches the name of the key; the command the key runs; the input section the key is part of; the owner of the key (typically the script that creates it); and any comments on the same line as the key in input.conf.
@@ -24,6 +26,7 @@ Pressing keys 1-9 will send the command for that respective entry.
 Keybinds which are disabled or overridden will be shown at 50% opacity.
 
 ### Commands
+
 ![commands_page](screenshots/command_page.png)
 
 The command page displays input commands that can be used in input.conf or the console, as well as their arguments. The script only searches the name of the commands.
@@ -33,6 +36,7 @@ The search page shows all of the command names in lavendar on the left. The foll
 Pressing keys 1-9 will load the command for that respective entry into console.lua, and print the arguments and their types to the console for reference. Compulsory arguments will have an exclamation mark before them.
 
 ### Options
+
 ![option_page](screenshots/option_page.png)
 
 The options page is for searching options that can be set on the commandline or through mpv.conf. Most of these options have matching properties. The script searches the option name, as well as any choices that are available.
@@ -40,13 +44,14 @@ The options page is for searching options that can be set on the commandline or 
 The option page contains the option name in lavendar, directly followed by the option type in yellow. The cyan entry is the current value of the option, if available, and the yellow is the default option value. The green value shows different information depending on the option type; if the option is a float, integer, double, aspect, or bytesize, then the valid option range is displayed; if the option is a choice, then the valid choices are listed.
 
 ### Properties
+
 ![property_page](screenshots/property_page.png)
 
 The properties page shows all of the properties, and their current values, for the current file. Only the property name is included in the search. Note that the property list contains most options as well.
 
 The search page simply contains the property name on the left, followed by it's current value (if it has one).
 
-## Keybinds
+## Default Keybinds
 
 The default keybinds are listed below, these can be overwritten using input.conf. Their purposes should be self evident:
 
@@ -72,8 +77,8 @@ In addition the following keybinds are dynamically created when the search page 
 
 The jumplist keys are only bound if the corresposnding result actually exists.
 
-
 ## Queries
+
 ![query_example](screenshots/REPL_input.png)
 
 When the default f12 keybinds are used, console.lua will open with a pre-entered query command and the query type argument already entered. You then just need to type the search string and press enter.
@@ -128,7 +133,7 @@ on the commands page it exits the page and loads the command up into console.lua
 
 In addition, you can press enter to run the jump command on the currently selected result in the list when scrolling.
 
-## Options
+## Configuration
 
 Search page will read several options from script-opts when the player is lanched, the current options, and their defaults are:
 
@@ -144,10 +149,9 @@ The full list of options, and their defaults are shown in [search_page.conf](sea
 
 Some ideas for future functionality:
 
-*   ~~Implement scrolling~~
-*   Json options file to configure jumplist behaviour/commands
-    *   Add jumplists for properties and options
-    *   Add multiple commands for each item using Ctrl,Alt, etc
-    *   Implement a cursor to select items for commands (same as jumplist)
-*   Search multiple queries at once (may already be possible with lua patterns)
-
+* ~~Implement scrolling~~
+* Json options file to configure jumplist behaviour/commands
+  * Add jumplists for properties and options
+  * Add multiple commands for each item using Ctrl,Alt, etc
+  * Implement a cursor to select items for commands (same as jumplist)
+* Search multiple queries at once (may already be possible with lua patterns)
