@@ -73,9 +73,6 @@ In addition the following keybinds are dynamically created when the search page 
     Ctrl+right      open next page and run latest search
     Ctrl+enter      re-run latest search on current page
     enter           see jumplist
-    1-9             see jumplist
-
-The jumplist keys are only bound if the corresposnding result actually exists.
 
 ## Queries
 
@@ -137,7 +134,6 @@ In addition, you can press enter to run the jump command on the currently select
 
 Search page will read several options from script-opts when the player is lanched, the current options, and their defaults are:
 
-    enable_jumplist = yes   #disables the jumplist keybinds
     max_list = 26           #number of search results to show
     pan_speed = 100         #horizontal pixels to pan on each keypress
 
@@ -151,7 +147,7 @@ Some ideas for future functionality:
 
 * ~~Implement scrolling~~
 * Json options file to configure jumplist behaviour/commands
-  * Add jumplists for properties and options
+  * ~~Add jumplists for properties and options~~
   * Add multiple commands for each item using Ctrl,Alt, etc
-  * Implement a cursor to select items for commands (same as jumplist)
+  * ~~Implement a cursor to select items for commands (same as jumplist)~~
 * Search multiple queries at once (may already be possible with lua patterns)
