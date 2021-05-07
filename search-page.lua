@@ -112,8 +112,8 @@ list_meta.indent = [[\h\h\h]]
 list_meta.num_entries = o.max_list
 list_meta.empty_text = "no results"
 
-list_meta.current_page = nil
-list_meta.latest_search = {
+local CURRENT_PAGE = nil
+local LATEST_SEARCH = {
     keyword = "",
     flags = ""
 }
@@ -167,7 +167,7 @@ local function create_page(type, t)
         {"Shift+RIGHT", "page_right", function() temp:move_page(1) end, {}},
         {"Ctrl+LEFT", "page_left_search", function() temp:move_page(-1, true) end, {}},
         {"Ctrl+RIGHT", "page_right_search", function() temp:move_page(1, true) end, {}},
-        {"Ctrl+ENTER", "run_latest", function() temp:run_search(temp.latest_search.keyword, temp.latest_search.flags) end, {}},
+        {"Ctrl+ENTER", "run_latest", function() temp:run_search(LATEST_SEARCH.keyword, LATEST_SEARCH.flags) end, {}},
         {"f12", "open_search", function() temp:get_input(false) end, {}},
         {"Shift+f12", "open_flag_search", function() temp:get_input(true) end, {}}
     }
@@ -182,15 +182,15 @@ local PROPERTIES = create_page("property")
 -- a table to track the different pages based on numerical id or type
 local PAGES = {
     [1] = KEYBINDS,
-    ["keybind"] = KEYBINDS,
+    ["keybinds"] = KEYBINDS,
     [2] = COMMANDS,
-    ["command"] = COMMANDS,
+    ["commands"] = COMMANDS,
     [3] = OPTIONS,
-    ["option"] = OPTIONS,
+    ["options"] = OPTIONS,
     [4] = PROPERTIES,
-    ["property"] = PROPERTIES
+    ["properties"] = PROPERTIES
 }
-list_meta.current_page = KEYBINDS
+CURRENT_PAGE = KEYBINDS
 
 function list_meta:move_page(direction, match_search)
     ui.cancel_user_input("search_term")
@@ -201,7 +201,7 @@ function list_meta:move_page(direction, match_search)
     if index == 0 then index = 4 end
 
     local new_page = PAGES[index]
-    list_meta.current_page = new_page
+    CURRENT_PAGE = new_page
     if match_search then
         new_page.keyword = self.keyword
         new_page.flags = self.flags
@@ -473,9 +473,9 @@ function list_meta:run_search()
     end
 
     self.selected = 1
-    list_meta.current_page = self
-    self.latest_search.keyword = self.keyword
-    self.latest_search.flags = self.flags
+    CURRENT_PAGE = self
+    LATEST_SEARCH.keyword = self.keyword
+    LATEST_SEARCH.flags = self.flags
     self:clear()
 
     self:search( keyword, flag_set)
@@ -523,9 +523,19 @@ function list_meta:get_input(get_flags)
 end
 
 mp.add_key_binding("f12", "open-search-page", function()
-    list_meta.current_page:open_wrapper()
+    CURRENT_PAGE:open_wrapper()
 end)
 
 mp.add_key_binding("Shift+f12", "open-search-page/advanced", function()
-    list_meta.current_page:open_wrapper(true)
+    CURRENT_PAGE:open_wrapper(true)
+end)
+
+mp.register_script_message("open-page", function(page)
+    CURRENT_PAGE:close()
+    PAGES[page]:open_wrapper()
+end)
+
+mp.register_script_message("open-page/advanced", function(page)
+    CURRENT_PAGE:close()
+    PAGES[page]:open_wrapper(true)
 end)
