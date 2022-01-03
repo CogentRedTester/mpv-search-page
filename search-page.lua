@@ -96,6 +96,40 @@ local o = {
 
 opt.read_options(o, "search_page")
 
+local style = {
+    common = {
+        header = [[{\c&H00ccff&\fs40\b500\q2\fnMonospace}]],
+        underline = [[{\c&00ccff&\fs30\b100\q2}]],
+        footer = [[{\r\c&00ccff&\b500\fs20}]],
+        selector = [[{\c&H00ccff&}]],
+        allselectorspaces = [[{\c&H33ff66&}]],
+        line = [[{\r\fs20\q2}]],
+    },
+    keybinds = {
+        key = [[{\c&Hffccff&}]],
+        section = [[{\c&H00cccc&}]],
+        cmdkey = [[{\c&Hffff00&}]],
+        comment = [[{\c&H33ff66&}]]
+    },
+    commands = {
+        cmd = [[{\c&Hffccff&}]],
+        args = [[{\c&H33ff66&}]],
+        optargs = [[{\c&Hffff00&}]],
+        argtype = [[{\c&H00cccc&\fs12}]]
+    },
+    options = {
+        options = [[{\c&Hffccff&}]],
+        value = [[{\c&Hffff00&}]],
+        type = [[{\c&H00cccc&}]],
+        default = [[{\c&H00cccc&}]],
+        special = [[{\c&H33ff66&}]]
+    },
+    properties = {
+        properties = [[{\c&Hffccff&}]],
+        value = [[{\\c&Hffff00&}]]
+    },
+}
+
 package.path = mp.command_native({"expand-path", "~~/script-modules/?.lua;"})..package.path
 local ui = require "user-input-module"
 local _list = require "scroll-list"
