@@ -158,7 +158,7 @@ function list_meta:format_header()
     else
         flags = " ("..flags..")"
     end
-    self:append(o.ass_header.."Search results for "..self.type ..' "'..self.ass_escape(self.keyword or "")..'"'..flags)
+    self:append(o.ass_header.."Search results for "..self.type ..' "'..self.ass_escape(self.keyword or "", style.common.selector.."\\\239\187\191n"..style.properties.value)..'"'..flags)
     self:newline()
     self:append(o.ass_underline.."---------------------------------------------------------")
     self:newline()
@@ -439,7 +439,7 @@ function OPTIONS:search(keyword, flags)
                 options_spec = "    [ "..mp.get_property_number('option-info/'..option..'/min', "").."  -  ".. mp.get_property_number("option-info/"..option..'/max', "").." ]"
             end
 
-            local result = o.ass_options..self.ass_escape(option).."  "..o.ass_optionstype..type..first_space..o.ass_optvalue..self.ass_escape(opt_value)
+            local result = o.ass_options..self.ass_escape(option).."  "..o.ass_optionstype..type..first_space..o.ass_optvalue..self.ass_escape(opt_value, true)
             result = result..second_space..o.ass_optionsdefault..self.ass_escape(default)..third_space..o.ass_optionsspec..self.ass_escape(options_spec)
             self:insert({
                 type = "option",
@@ -460,7 +460,7 @@ function PROPERTIES:search(keyword, flags)
         if compare(property, keyword, flags) then
             self:insert({
                 type = "property",
-                ass = o.ass_properties..self.ass_escape(property)..return_spaces(property:len(), 40)..o.ass_propertycurrent..self.ass_escape(mp.get_property(property, "")),
+                ass = o.ass_properties..self.ass_escape(property)..return_spaces(property:len(), 40)..o.ass_propertycurrent..self.ass_escape(mp.get_property(property, ""), style.common.selector.."\\\239\187\191n"..style.properties.value),
                 funct = function()
                     mp.commandv('script-message-to', 'console', 'type', 'print-text ${'.. property .. "} ")
                     self:close()
