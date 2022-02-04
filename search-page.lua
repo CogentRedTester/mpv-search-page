@@ -55,7 +55,7 @@ local utils = require 'mp.utils'
 
 local o = {
     --there seems to be a significant performance hit from having lots of text off the screen
-    max_list = 21,
+    max_list = 20,
 
     --number of pixels to pan on each click
     --this refers to the horizontal panning
