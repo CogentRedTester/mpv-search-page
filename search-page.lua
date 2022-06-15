@@ -115,6 +115,30 @@ local LATEST_SEARCH = {
     flags = ""
 }
 
+--in lua 5.1 there is only one return value which will be nil if run from the main thread
+--in lua 5.2 main will be true if running from the main thread
+function coroutine_assert(err)
+    local co, main = coroutine.running()
+    assert(not main and co, err or "error - function must be executed from within a coroutine")
+    return co
+end
+
+--creates a callback fuction to resume the current coroutine
+function coroutine_callback()
+    local co = coroutine_assert("cannot create a coroutine callback for the main thread")
+    return function(...)
+        --if the coroutine is still running (usually when the async function failed) then queue a resume
+        if coroutine.status(co) ~= "suspended" then
+            local results = table.pack(...)
+            mp.add_timeout(0, function()
+                return coroutine.resume(co, table.unpack(results, 1, results.n))
+            end)
+        end
+
+        return coroutine.resume(co, ...)
+    end
+end
+
 --loads the header
 function list_meta:format_header()
     self:append("{\\pos("..self.posX..",10)\\an7}")
@@ -189,9 +213,13 @@ local PAGES = {
 }
 CURRENT_PAGE = KEYBINDS
 
-function list_meta:move_page(direction, match_search)
+local function cancel_user_input()
     ui.cancel_user_input("search_term")
     ui.cancel_user_input("flags")
+end
+
+function list_meta:move_page(direction, match_search)
+    cancel_user_input()
     self:close()
     local index = self.id
     index = (index + direction) % 4
@@ -492,33 +520,38 @@ local function strip_whitespace(str)
     return str:gsub("^(%s+)", ""):gsub("(%s+)$", "")
 end
 
-function list_meta:handle_query_input(input, wait_for_flag)
-    if input == nil then return end
-    self.keyword = strip_whitespace(input)
-    self.flags = nil
-    if not wait_for_flag then self:run_search() end
-end
-
-function list_meta:handle_flag_input(input, err)
-    if input == nil and err ~= "exitted" then return
-    elseif input == nil then self:run_search() ; return end
-
-    self.flags = strip_whitespace(input):gsub("%W+", "+")
-    self:run_search()
-end
-
 function list_meta:get_input(get_flags)
-    ui.get_user_input(function(input)
-        self:handle_query_input(input, get_flags)
-    end, {id = "search_term", text = "Enter query for "..(get_flags and "advanced " or "")..self.type.." search:", replace = true})
+    cancel_user_input()
 
-    if get_flags then
-        ui.get_user_input(function(input, err)
-            self:handle_flag_input(input, err)
-        end, {id = "flags", text = "Enter flags:"})
-    else
-        ui.cancel_user_input("flags")
-    end
+    local co = coroutine.create(function()
+        local line, err = coroutine.yield(
+            ui.get_user_input(coroutine_callback(), {
+                id = "search_term",
+                text = ("Enter query for %s%s%s search:"):format(get_flags and "advanced" or "", get_flags and " " or "", self.type),
+            })
+        )
+
+        if line == nil then return end
+        self.keyword = strip_whitespace(line)
+        self.flags = nil
+
+        if not get_flags then return self:run_search() end
+
+        line, err = coroutine.yield(
+            ui.get_user_input(coroutine_callback(), {
+                id = "flags",
+                text = "Enter flags:"
+            })
+        )
+
+        if line == nil and err == "exited" then return self:run_search()
+        elseif line == nil then return end
+
+        self.flags = strip_whitespace(line):gsub("%W+", "+")
+        self:run_search()
+    end)
+
+    coroutine.resume(co)
 end
 
 mp.add_key_binding("f12", "open-search-page", function()
