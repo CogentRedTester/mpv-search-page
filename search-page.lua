@@ -123,19 +123,20 @@ function coroutine_assert(err)
     return co
 end
 
+--resumes a coroutine and prints an error if it was not sucessful
+function coroutine_resume_err(...)
+    local success, err = coroutine.resume(...)
+    if not success then
+        msg.error(err)
+    end
+    return success
+end
+
 --creates a callback fuction to resume the current coroutine
 function coroutine_callback()
     local co = coroutine_assert("cannot create a coroutine callback for the main thread")
     return function(...)
-        --if the coroutine is still running (usually when the async function failed) then queue a resume
-        if coroutine.status(co) ~= "suspended" then
-            local results = table.pack(...)
-            mp.add_timeout(0, function()
-                return coroutine.resume(co, table.unpack(results, 1, results.n))
-            end)
-        end
-
-        return coroutine.resume(co, ...)
+        return coroutine_resume_err(co, ...)
     end
 end
 
@@ -490,15 +491,6 @@ function list_meta:run_search()
         })
     end
 
-    --error handling for users who enter an invalid pattern
-    if flag_set and flag_set.pattern then
-        local success, result = pcall(function() (""):find(keyword) end)
-        if not success then
-            msg.error(result:match("missing.+$"))
-            return
-        end
-    end
-
     self.selected = 1
     CURRENT_PAGE = self
     LATEST_SEARCH.keyword = self.keyword
@@ -551,7 +543,7 @@ function list_meta:get_input(get_flags)
         self:run_search()
     end)
 
-    coroutine.resume(co)
+    coroutine_resume_err(co)
 end
 
 mp.add_key_binding("f12", "open-search-page", function()
