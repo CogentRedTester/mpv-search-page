@@ -111,6 +111,12 @@ By default the script will escape these special characters to make searches more
 
 The full list of options, and their defaults are shown in [search_page.conf](search_page.conf).
 
+The scale of the input prompt can be changed with this setting in the `mpv.conf`:
+
+```txt
+script-opts-append=user_input-scale=1
+```
+
 ## Future Plans
 
 Some ideas for future functionality:
