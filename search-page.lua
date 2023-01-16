@@ -60,6 +60,10 @@ local o = {
     --number of pixels to pan on each click
     --this refers to the horizontal panning
     pan_speed = 100,
+    
+    --these change the default keybindings to open a search, as well as to restart a search, while a page is open
+    keybind_open_search = "f12",
+    keybind_open_flag_search = "Shift+f12",
 
     --all colour options
     ass_header = "{\\c&H00ccff&\\fs40\\b500\\q2\\fnMonospace}",
@@ -190,8 +194,8 @@ local function create_page(type, t)
         {"Ctrl+LEFT", "page_left_search", function() temp:move_page(-1, true) end, {}},
         {"Ctrl+RIGHT", "page_right_search", function() temp:move_page(1, true) end, {}},
         {"Ctrl+ENTER", "run_latest", function() temp:run_search(LATEST_SEARCH.keyword, LATEST_SEARCH.flags) end, {}},
-        {"f12", "open_search", function() temp:get_input(false) end, {}},
-        {"Shift+f12", "open_flag_search", function() temp:get_input(true) end, {}}
+        {o.keybind_open_search, "open_search", function() temp:get_input(false) end, {}},
+        {o.keybind_open_flag_search, "open_flag_search", function() temp:get_input(true) end, {}}
     }
     return temp
 end
@@ -502,7 +506,7 @@ function list_meta:run_search()
 end
 
 function list_meta:open_wrapper(advanced)
-    if self.keyword == nil then self.empty_text = "Press f12 to enter search query" end
+    if self.keyword == nil then self.empty_text = "Enter a new search query" end
     self:open()
     if self.keyword == nil then self:get_input(advanced) end
 end
@@ -546,11 +550,11 @@ function list_meta:get_input(get_flags)
     coroutine_resume_err(co)
 end
 
-mp.add_key_binding("f12", "open-search-page", function()
+mp.add_key_binding(o.keybind_open_search, "open-search-page", function()
     CURRENT_PAGE:open_wrapper()
 end)
 
-mp.add_key_binding("Shift+f12", "open-search-page/advanced", function()
+mp.add_key_binding(o.keybind_open_flag_search, "open-search-page/advanced", function()
     CURRENT_PAGE:open_wrapper(true)
 end)
 

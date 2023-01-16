@@ -66,7 +66,7 @@ The script messages allow you to specify which page to open, valid values are `k
 
 ### Dynamic Keybinds
 
-In addition the following keybinds are dynamically created when the search page is open, these cannot currently be changed:
+In addition the following keybinds are dynamically created when the search page is open. `f12` and `Shift+f12` can be changed in [search_page.conf](search_page.conf). The others cannot currently be changed:
 
     f12             opens search input
     Shift+f12       opens advanced search input
@@ -110,6 +110,12 @@ By default the script will escape these special characters to make searches more
 ## Configuration
 
 The full list of options, and their defaults are shown in [search_page.conf](search_page.conf).
+
+The scale of the input prompt can be changed with this setting in the `mpv.conf`:
+
+```txt
+script-opts-append=user_input-scale=1
+```
 
 ## Future Plans
 
